@@ -1,103 +1,363 @@
-import Image from "next/image";
+'use client';
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import EditorInterface from './components/EditorInterface';
+import UploadSection from './components/UploadSection';
+import { useHelmetControls } from './hooks/useHelmetControls';
+import type { Position } from './types';
+import { renderHelmetImage } from './utils/canvasRenderer';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [originalFilename, setOriginalFilename] = useState<string>('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [helmetImageError, setHelmetImageError] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [useBackground, setUseBackground] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const previewContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    helmetPosition,
+    helmetScale,
+    isDraggingHelmet,
+    handleHelmetMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    adjustScale,
+    resetHelmetPosition,
+    setHelmetPosition,
+  } = useHelmetControls(previewContainerRef);
+
+  const handleFile = useCallback((file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      setIsImageLoaded(false);
+      // Store the original filename without extension
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+      setOriginalFilename(nameWithoutExt);
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setUploadedImage(event.target?.result as string);
+        setShowPreview(true);
+        setIsImageLoaded(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, []);
+
+  const handleImageUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        handleFile(file);
+      }
+    },
+    [handleFile],
+  );
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragging(false);
+
+      const file = e.dataTransfer.files?.[0];
+      if (file) {
+        handleFile(file);
+      }
+    },
+    [handleFile],
+  );
+
+  const updatePreview = useCallback(async () => {
+    if (!uploadedImage || !previewCanvasRef.current || !previewContainerRef.current) return;
+
+    const canvas = previewCanvasRef.current;
+    const container = previewContainerRef.current;
+    const containerSize = container.clientWidth;
+
+    // Only update canvas dimensions if they've changed
+    if (canvas.width !== containerSize || canvas.height !== containerSize) {
+      canvas.width = containerSize;
+      canvas.height = containerSize;
+    }
+
+    try {
+      await renderHelmetImage({
+        canvas,
+        userImage: uploadedImage,
+        helmetPosition,
+        helmetScale,
+        useBackground,
+        isPreview: true,
+      });
+    } catch (error) {
+      console.error('Error rendering preview:', error);
+      setHelmetImageError(true);
+    }
+  }, [uploadedImage, helmetPosition, helmetScale, useBackground]);
+
+  useEffect(() => {
+    if (!showPreview) return;
+    
+    let animationFrameId: number;
+    
+    const scheduleUpdate = () => {
+      animationFrameId = requestAnimationFrame(() => {
+        updatePreview();
+      });
+    };
+    
+    scheduleUpdate();
+    
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [updatePreview, showPreview]);
+
+  useEffect(() => {
+    const handleHelmetPositionUpdate = (e: CustomEvent<Position>) => {
+      setHelmetPosition(e.detail);
+    };
+
+    window.addEventListener('helmet-position-update', handleHelmetPositionUpdate as EventListener);
+    return () => {
+      window.removeEventListener(
+        'helmet-position-update',
+        handleHelmetPositionUpdate as EventListener,
+      );
+    };
+  }, [setHelmetPosition]);
+
+  const downloadFinalImage = useCallback(async () => {
+    if (!uploadedImage || !canvasRef.current) return;
+
+    setIsProcessing(true);
+
+    const canvas = canvasRef.current;
+
+    try {
+      await renderHelmetImage({
+        canvas,
+        userImage: uploadedImage,
+        helmetPosition,
+        helmetScale,
+        useBackground,
+        isPreview: false,
+      });
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${originalFilename}-helmet.png`;
+          link.click();
+          URL.revokeObjectURL(url);
+        }
+        setIsProcessing(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      setHelmetImageError(true);
+      setIsProcessing(false);
+    }
+  }, [uploadedImage, originalFilename, helmetPosition, helmetScale, useBackground]);
+
+  const resetImages = useCallback(() => {
+    setUploadedImage(null);
+    setOriginalFilename('');
+    setShowPreview(false);
+    resetHelmetPosition();
+    setIsImageLoaded(false);
+    setUseBackground(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [resetHelmetPosition]);
+
+  return (
+    <main className='min-h-screen bg-gray-50'>
+      {/* Hero Section */}
+      {!uploadedImage && !showPreview && (
+        <section className='py-12'>
+          <div className='max-w-4xl mx-auto px-6 text-center'>
+            <div className='relative mb-8'>
+              <div className='relative mb-4'>
+                <img
+                  src='/helmet.png'
+                  alt='Helmet'
+                  className='w-24 h-24 md:w-32 md:h-32 mx-auto animate-float opacity-90 drop-shadow-2xl'
+                />
+              </div>
+              <h1 className='relative text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2 animate-fade-in'>
+                HELMET GENERATOR
+              </h1>
+              <div className='text-lg md:text-xl text-gray-600 font-medium mb-4'>for the</div>
+              <div className='flex items-center justify-center gap-4 mb-6'>
+                <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
+                <h2 className='text-3xl md:text-4xl font-black text-blue-600 tracking-wider'>
+                  The Bubbleheads COMMUNITY
+                </h2>
+                <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
+              </div>
+            </div>
+
+            <div className='flex items-center justify-center gap-6 text-sm text-gray-500'>
+              <div className='flex items-center gap-2'>
+                <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
+                  <span className='text-blue-600 text-xs font-bold'>1</span>
+                </div>
+                <span>Upload Photo</span>
+              </div>
+              <div className='w-px h-4 bg-gray-300'></div>
+              <div className='flex items-center gap-2'>
+                <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
+                  <span className='text-blue-600 text-xs font-bold'>2</span>
+                </div>
+                <span>Customize Helmet</span>
+              </div>
+              <div className='w-px h-4 bg-gray-300'></div>
+              <div className='flex items-center gap-2'>
+                <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
+                  <span className='text-blue-600 text-xs font-bold'>3</span>
+                </div>
+                <span>Download & Share</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Error Message */}
+      {helmetImageError && (
+        <section className='py-8 px-6'>
+          <div className='max-w-2xl mx-auto'>
+            <div className='bg-red-50 border border-red-200 rounded-lg p-6'>
+              <div className='flex items-start'>
+                <div className='w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0'>
+                  <svg
+                    className='h-5 w-5 text-white'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z'
+                    />
+                  </svg>
+                </div>
+                <div className='ml-4'>
+                  <h3 className='text-lg font-semibold text-red-800 mb-2'>Setup Required</h3>
+                  <p className='text-red-700 mb-4'>
+                    Please add your helmet image to complete the setup:
+                  </p>
+                  <div className='space-y-2 text-sm text-red-700'>
+                    <div className='flex items-center gap-2'>
+                      <span className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                        1
+                      </span>
+                      <span>Save the helmet image as &quot;helmet.png&quot;</span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <span className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                        2
+                      </span>
+                      <span>Place it in the &quot;public/&quot; directory</span>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <span className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                        3
+                      </span>
+                      <span>Refresh the page and try again</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Upload Section */}
+      {!uploadedImage && (
+        <UploadSection
+          isDragging={isDragging}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onFileSelect={handleImageUpload}
+          fileInputRef={fileInputRef}
+        />
+      )}
+
+      {/* Editor Interface */}
+      {showPreview && (
+        <EditorInterface
+          previewCanvasRef={previewCanvasRef}
+          previewContainerRef={previewContainerRef}
+          helmetPosition={helmetPosition}
+          helmetScale={helmetScale}
+          isImageLoaded={isImageLoaded}
+          isDraggingHelmet={isDraggingHelmet}
+          useBackground={useBackground}
+          onBackgroundToggle={setUseBackground}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseDown={handleHelmetMouseDown}
+          onScaleAdjust={adjustScale}
+          onResetPosition={resetHelmetPosition}
+          onProcessImage={downloadFinalImage}
+          onCancel={resetImages}
+          isProcessing={isProcessing}
+        />
+      )}
+
+      {/* Hidden Canvas */}
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+      {/* Footer */}
+      <footer className='mt-16 py-8 px-6 border-t border-gray-200'>
+        <div className='max-w-4xl mx-auto text-center'>
+          <p className='text-sm text-gray-600'>
+            made by a{' '}
+            <a
+              href='https://x.com/JulienCoulaud/status/1951264332165140624'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-blue-600 hover:text-blue-700 font-medium'>
+              degen
+            </a>{' '}
+            for the{' '}
+            <a
+              href='https://x.com/TheBubble_Heads'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='text-blue-600 hover:text-blue-700 font-medium'>
+              bubbleheads community
+            </a>
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
       </footer>
-    </div>
+    </main>
   );
 }
