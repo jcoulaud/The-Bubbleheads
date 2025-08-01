@@ -30,9 +30,9 @@ interface EditorInterfaceProps {
   editMode: 'helmet' | 'user';
   onEditModeChange: (mode: 'helmet' | 'user') => void;
   onBackgroundToggle: (value: boolean) => void;
-  onMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseMove: (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => void;
   onMouseUp: () => void;
-  onMouseDown: (e: React.MouseEvent<HTMLElement>) => void;
+  onMouseDown: (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => void;
   onScaleAdjust: (delta: number) => void;
   onUserImageScaleAdjust: (delta: number) => void;
   onUserImageRotationAdjust: (delta: number) => void;
@@ -394,6 +394,9 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                   onMouseMove={onMouseMove}
                   onMouseUp={onMouseUp}
                   onMouseDown={onMouseDown}
+                  onTouchStart={onMouseDown}
+                  onTouchMove={onMouseMove}
+                  onTouchEnd={onMouseUp}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   style={{ cursor: isDraggingHelmet || isDraggingUserImage ? 'grabbing' : 'grab' }}>

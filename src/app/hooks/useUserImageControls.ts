@@ -12,8 +12,10 @@ interface UseUserImageControlsReturn {
   setUserImageScale: (scale: number) => void;
   setUserImageRotation: (rotation: number) => void;
   setUserImageFlipped: (flipped: boolean) => void;
-  handleUserImageMouseDown: (e: React.MouseEvent<HTMLElement>) => void;
-  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
+  handleUserImageMouseDown: (
+    e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>,
+  ) => void;
+  handleMouseMove: (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => void;
   handleMouseUp: () => void;
   adjustScale: (delta: number) => void;
   adjustRotation: (delta: number) => void;
@@ -32,13 +34,24 @@ export function useUserImageControls(
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
 
   const handleUserImageMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
+    (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
       e.preventDefault();
       if (!previewContainerRef.current) return;
 
       const rect = previewContainerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = (e.clientY - rect.top) / rect.height;
+      let clientX: number, clientY: number;
+
+      if ('touches' in e) {
+        const touch = e.touches[0];
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
 
       setDragOffset({
         x: x - userImagePosition.x,
@@ -51,12 +64,23 @@ export function useUserImageControls(
   );
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
+    (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
       if (!isDraggingUserImage || !previewContainerRef.current) return;
 
       const rect = previewContainerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = (e.clientY - rect.top) / rect.height;
+      let clientX: number, clientY: number;
+
+      if ('touches' in e) {
+        const touch = e.touches[0];
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
 
       setUserImagePosition({
         x: x - dragOffset.x,
@@ -91,12 +115,23 @@ export function useUserImageControls(
 
   useEffect(() => {
     if (isDraggingUserImage) {
-      const handleDocumentMouseMove = (e: MouseEvent) => {
+      const handleDocumentMouseMove = (e: MouseEvent | TouchEvent) => {
         if (!previewContainerRef.current) return;
 
         const rect = previewContainerRef.current.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
+        let clientX: number, clientY: number;
+
+        if (e instanceof TouchEvent) {
+          const touch = e.touches[0];
+          clientX = touch.clientX;
+          clientY = touch.clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+
+        const x = (clientX - rect.left) / rect.width;
+        const y = (clientY - rect.top) / rect.height;
 
         setUserImagePosition({
           x: x - dragOffset.x,
@@ -110,10 +145,14 @@ export function useUserImageControls(
 
       document.addEventListener('mousemove', handleDocumentMouseMove);
       document.addEventListener('mouseup', handleDocumentMouseUp);
+      document.addEventListener('touchmove', handleDocumentMouseMove, { passive: false });
+      document.addEventListener('touchend', handleDocumentMouseUp);
 
       return () => {
         document.removeEventListener('mousemove', handleDocumentMouseMove);
         document.removeEventListener('mouseup', handleDocumentMouseUp);
+        document.removeEventListener('touchmove', handleDocumentMouseMove);
+        document.removeEventListener('touchend', handleDocumentMouseUp);
       };
     }
   }, [isDraggingUserImage, dragOffset, previewContainerRef]);

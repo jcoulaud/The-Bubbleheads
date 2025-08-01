@@ -8,8 +8,8 @@ interface UseHelmetControlsReturn {
   dragOffset: Position;
   setHelmetPosition: (position: Position) => void;
   setHelmetScale: (scale: number) => void;
-  handleHelmetMouseDown: (e: React.MouseEvent<HTMLElement>) => void;
-  handleMouseMove: (e: React.MouseEvent<HTMLElement>) => void;
+  handleHelmetMouseDown: (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => void;
+  handleMouseMove: (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => void;
   handleMouseUp: () => void;
   adjustScale: (delta: number) => void;
   resetHelmetPosition: () => void;
@@ -24,13 +24,24 @@ export function useHelmetControls(
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
 
   const handleHelmetMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
+    (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
       e.preventDefault();
       if (!previewContainerRef.current) return;
 
       const rect = previewContainerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = (e.clientY - rect.top) / rect.height;
+      let clientX: number, clientY: number;
+
+      if ('touches' in e) {
+        const touch = e.touches[0];
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
 
       setDragOffset({
         x: x - helmetPosition.x,
@@ -43,12 +54,23 @@ export function useHelmetControls(
   );
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
+    (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
       if (!isDraggingHelmet || !previewContainerRef.current) return;
 
       const rect = previewContainerRef.current.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width;
-      const y = (e.clientY - rect.top) / rect.height;
+      let clientX: number, clientY: number;
+
+      if ('touches' in e) {
+        const touch = e.touches[0];
+        clientX = touch.clientX;
+        clientY = touch.clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const x = (clientX - rect.left) / rect.width;
+      const y = (clientY - rect.top) / rect.height;
 
       setHelmetPosition({
         x: Math.max(0, Math.min(1, x - dragOffset.x)),
@@ -73,12 +95,23 @@ export function useHelmetControls(
 
   useEffect(() => {
     if (isDraggingHelmet) {
-      const handleDocumentMouseMove = (e: MouseEvent) => {
+      const handleDocumentMouseMove = (e: MouseEvent | TouchEvent) => {
         if (!previewContainerRef.current) return;
 
         const rect = previewContainerRef.current.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
+        let clientX: number, clientY: number;
+
+        if (e instanceof TouchEvent) {
+          const touch = e.touches[0];
+          clientX = touch.clientX;
+          clientY = touch.clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+
+        const x = (clientX - rect.left) / rect.width;
+        const y = (clientY - rect.top) / rect.height;
 
         setHelmetPosition({
           x: Math.max(0, Math.min(1, x - dragOffset.x)),
@@ -92,10 +125,14 @@ export function useHelmetControls(
 
       document.addEventListener('mousemove', handleDocumentMouseMove);
       document.addEventListener('mouseup', handleDocumentMouseUp);
+      document.addEventListener('touchmove', handleDocumentMouseMove, { passive: false });
+      document.addEventListener('touchend', handleDocumentMouseUp);
 
       return () => {
         document.removeEventListener('mousemove', handleDocumentMouseMove);
         document.removeEventListener('mouseup', handleDocumentMouseUp);
+        document.removeEventListener('touchmove', handleDocumentMouseMove);
+        document.removeEventListener('touchend', handleDocumentMouseUp);
       };
     }
   }, [isDraggingHelmet, dragOffset, previewContainerRef]);

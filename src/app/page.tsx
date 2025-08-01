@@ -239,9 +239,9 @@ export default function Home() {
     }
   }, [resetHelmetPosition, resetUserImageTransform]);
 
-  // Combined mouse handlers that delegate based on edit mode
+  // Combined mouse/touch handlers that delegate based on edit mode
   const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
+    (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
       if (editMode === 'helmet') {
         handleHelmetMouseDown(e);
       } else {
@@ -252,7 +252,7 @@ export default function Home() {
   );
 
   const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLElement>) => {
+    (e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
       if (editMode === 'helmet') {
         handleHelmetMouseMove(e);
       } else {
