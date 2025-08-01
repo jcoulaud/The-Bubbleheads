@@ -9,6 +9,7 @@ import {
   RotateCcw,
   RotateCw,
   Target,
+  Maximize2,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useKeyboardControls } from '../hooks/useKeyboardControls';
@@ -23,6 +24,8 @@ interface EditorInterfaceProps {
   userImageScale: number;
   userImageRotation: number;
   userImageFlipped: boolean;
+  userImagePerspectiveX: number;
+  userImagePerspectiveY: number;
   isImageLoaded: boolean;
   isDraggingHelmet: boolean;
   isDraggingUserImage: boolean;
@@ -36,6 +39,8 @@ interface EditorInterfaceProps {
   onScaleAdjust: (delta: number) => void;
   onUserImageScaleAdjust: (delta: number) => void;
   onUserImageRotationAdjust: (delta: number) => void;
+  onUserImagePerspectiveXAdjust: (delta: number) => void;
+  onUserImagePerspectiveYAdjust: (delta: number) => void;
   onUserImageFlipToggle: () => void;
   onResetPosition: () => void;
   onResetUserImageTransform: () => void;
@@ -53,6 +58,8 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
   userImageScale,
   userImageRotation,
   userImageFlipped,
+  userImagePerspectiveX,
+  userImagePerspectiveY,
   isImageLoaded,
   isDraggingHelmet,
   isDraggingUserImage,
@@ -66,6 +73,8 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
   onScaleAdjust,
   onUserImageScaleAdjust,
   onUserImageRotationAdjust,
+  onUserImagePerspectiveXAdjust,
+  onUserImagePerspectiveYAdjust,
   onUserImageFlipToggle,
   onResetPosition,
   onResetUserImageTransform,
@@ -275,6 +284,71 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                       onClick={() => onUserImageRotationAdjust(15)}
                       className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <RotateCw className='w-3 h-3' />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Perspective Controls */}
+                <div>
+                  <div className='flex items-center justify-between mb-2'>
+                    <span className='text-sm text-gray-600'>Perspective X</span>
+                    <span className='text-sm font-medium text-green-600'>
+                      {Math.round(userImagePerspectiveX)}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      onClick={() => onUserImagePerspectiveXAdjust(-5)}
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
+                      <Minus className='w-3 h-3' />
+                    </button>
+                    <input
+                      type='range'
+                      min='-50'
+                      max='50'
+                      value={userImagePerspectiveX}
+                      onChange={(e) => {
+                        const newValue = parseInt(e.target.value);
+                        onUserImagePerspectiveXAdjust(newValue - userImagePerspectiveX);
+                      }}
+                      className='flex-1 h-2'
+                    />
+                    <button
+                      onClick={() => onUserImagePerspectiveXAdjust(5)}
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
+                      <Plus className='w-3 h-3' />
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div className='flex items-center justify-between mb-2'>
+                    <span className='text-sm text-gray-600'>Perspective Y</span>
+                    <span className='text-sm font-medium text-green-600'>
+                      {Math.round(userImagePerspectiveY)}
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      onClick={() => onUserImagePerspectiveYAdjust(-5)}
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
+                      <Minus className='w-3 h-3' />
+                    </button>
+                    <input
+                      type='range'
+                      min='-50'
+                      max='50'
+                      value={userImagePerspectiveY}
+                      onChange={(e) => {
+                        const newValue = parseInt(e.target.value);
+                        onUserImagePerspectiveYAdjust(newValue - userImagePerspectiveY);
+                      }}
+                      className='flex-1 h-2'
+                    />
+                    <button
+                      onClick={() => onUserImagePerspectiveYAdjust(5)}
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
+                      <Plus className='w-3 h-3' />
                     </button>
                   </div>
                 </div>

@@ -6,12 +6,16 @@ interface UseUserImageControlsReturn {
   userImageScale: number;
   userImageRotation: number;
   userImageFlipped: boolean;
+  userImagePerspectiveX: number;
+  userImagePerspectiveY: number;
   isDraggingUserImage: boolean;
   dragOffset: Position;
   setUserImagePosition: (position: Position) => void;
   setUserImageScale: (scale: number) => void;
   setUserImageRotation: (rotation: number) => void;
   setUserImageFlipped: (flipped: boolean) => void;
+  setUserImagePerspectiveX: (perspective: number) => void;
+  setUserImagePerspectiveY: (perspective: number) => void;
   handleUserImageMouseDown: (
     e: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>,
   ) => void;
@@ -19,6 +23,8 @@ interface UseUserImageControlsReturn {
   handleMouseUp: () => void;
   adjustScale: (delta: number) => void;
   adjustRotation: (delta: number) => void;
+  adjustPerspectiveX: (delta: number) => void;
+  adjustPerspectiveY: (delta: number) => void;
   toggleFlip: () => void;
   resetUserImageTransform: () => void;
 }
@@ -30,6 +36,8 @@ export function useUserImageControls(
   const [userImageScale, setUserImageScale] = useState(1);
   const [userImageRotation, setUserImageRotation] = useState(0);
   const [userImageFlipped, setUserImageFlipped] = useState(false);
+  const [userImagePerspectiveX, setUserImagePerspectiveX] = useState(0);
+  const [userImagePerspectiveY, setUserImagePerspectiveY] = useState(0);
   const [isDraggingUserImage, setIsDraggingUserImage] = useState(false);
   const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
 
@@ -102,6 +110,14 @@ export function useUserImageControls(
     setUserImageRotation((prev) => (prev + delta) % 360);
   }, []);
 
+  const adjustPerspectiveX = useCallback((delta: number) => {
+    setUserImagePerspectiveX((prev) => Math.max(-50, Math.min(50, prev + delta)));
+  }, []);
+
+  const adjustPerspectiveY = useCallback((delta: number) => {
+    setUserImagePerspectiveY((prev) => Math.max(-50, Math.min(50, prev + delta)));
+  }, []);
+
   const toggleFlip = useCallback(() => {
     setUserImageFlipped((prev) => !prev);
   }, []);
@@ -111,6 +127,8 @@ export function useUserImageControls(
     setUserImageScale(1);
     setUserImageRotation(0);
     setUserImageFlipped(false);
+    setUserImagePerspectiveX(0);
+    setUserImagePerspectiveY(0);
   }, []);
 
   useEffect(() => {
@@ -162,17 +180,23 @@ export function useUserImageControls(
     userImageScale,
     userImageRotation,
     userImageFlipped,
+    userImagePerspectiveX,
+    userImagePerspectiveY,
     isDraggingUserImage,
     dragOffset,
     setUserImagePosition,
     setUserImageScale,
     setUserImageRotation,
     setUserImageFlipped,
+    setUserImagePerspectiveX,
+    setUserImagePerspectiveY,
     handleUserImageMouseDown,
     handleMouseMove,
     handleMouseUp,
     adjustScale,
     adjustRotation,
+    adjustPerspectiveX,
+    adjustPerspectiveY,
     toggleFlip,
     resetUserImageTransform,
   };

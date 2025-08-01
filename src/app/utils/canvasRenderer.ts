@@ -1,5 +1,33 @@
 import { Position } from '../types';
 
+function applyPerspectiveTransform(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  width: number,
+  height: number,
+  perspectiveX: number,
+  perspectiveY: number,
+) {
+  // Convert perspective values from -50 to 50 range to transformation coefficients
+  const perspX = perspectiveX / 200; // Results in -0.25 to 0.25
+  const perspY = perspectiveY / 200;
+
+  // Calculate the four corner points with perspective distortion
+  const halfWidth = width / 2;
+  const halfHeight = height / 2;
+
+  // Top-left, top-right, bottom-right, bottom-left corners
+  const corners = [
+    { x: -halfWidth * (1 - perspX), y: -halfHeight * (1 - perspY) }, // TL
+    { x: halfWidth * (1 + perspX), y: -halfHeight * (1 + perspY) }, // TR
+    { x: halfWidth * (1 + perspX), y: halfHeight * (1 - perspY) }, // BR
+    { x: -halfWidth * (1 - perspX), y: halfHeight * (1 + perspY) }, // BL
+  ];
+
+  return corners;
+}
+
 interface RenderConfig {
   canvas: HTMLCanvasElement;
   userImage: string;
@@ -10,6 +38,8 @@ interface RenderConfig {
   userImageScale?: number;
   userImageRotation?: number;
   userImageFlipped?: boolean;
+  userImagePerspectiveX?: number;
+  userImagePerspectiveY?: number;
   isPreview?: boolean;
 }
 
@@ -24,6 +54,8 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
     userImageScale = 1,
     userImageRotation = 0,
     userImageFlipped = false,
+    userImagePerspectiveX = 0,
+    userImagePerspectiveY = 0,
     isPreview = false,
   } = config;
 
@@ -84,13 +116,24 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       ctx.arc(visorCenterX, visorCenterY, visorRadius, 0, Math.PI * 2);
       ctx.clip();
 
-      // Apply user image transformations
+      // Apply user image transformations with perspective
       ctx.save();
       ctx.translate(centerX, centerY);
       if (userImageFlipped) {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
+      
+      // Apply perspective transformation
+      if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
+        const matrix = new DOMMatrix();
+        matrix.a = 1 + userImagePerspectiveX / 100;
+        matrix.b = userImagePerspectiveY / 200;
+        matrix.c = userImagePerspectiveX / 200;
+        matrix.d = 1 + userImagePerspectiveY / 100;
+        ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+      }
+      
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
       
@@ -99,13 +142,24 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       ctx.fillStyle = '#f9fafb';
       ctx.fillRect(0, 0, containerSize, containerSize);
       
-      // Apply user image transformations
+      // Apply user image transformations with perspective
       ctx.save();
       ctx.translate(centerX, centerY);
       if (userImageFlipped) {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
+      
+      // Apply perspective transformation
+      if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
+        const matrix = new DOMMatrix();
+        matrix.a = 1 + userImagePerspectiveX / 100;
+        matrix.b = userImagePerspectiveY / 200;
+        matrix.c = userImagePerspectiveX / 200;
+        matrix.d = 1 + userImagePerspectiveY / 100;
+        ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+      }
+      
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
     }
@@ -132,7 +186,7 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       ctx.arc(visorCenterX, visorCenterY, visorRadius, 0, Math.PI * 2);
       ctx.clip();
 
-      // Apply user image transformations for final export
+      // Apply user image transformations for final export with perspective
       ctx.save();
       const centerX = canvas.width * userImagePosition.x;
       const centerY = canvas.height * userImagePosition.y;
@@ -144,12 +198,23 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
+      
+      // Apply perspective transformation
+      if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
+        const matrix = new DOMMatrix();
+        matrix.a = 1 + userImagePerspectiveX / 100;
+        matrix.b = userImagePerspectiveY / 200;
+        matrix.c = userImagePerspectiveX / 200;
+        matrix.d = 1 + userImagePerspectiveY / 100;
+        ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+      }
+      
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
       
       ctx.restore();
     } else {
-      // Apply user image transformations for final export
+      // Apply user image transformations for final export with perspective
       ctx.save();
       const centerX = canvas.width * userImagePosition.x;
       const centerY = canvas.height * userImagePosition.y;
@@ -161,6 +226,17 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
+      
+      // Apply perspective transformation
+      if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
+        const matrix = new DOMMatrix();
+        matrix.a = 1 + userImagePerspectiveX / 100;
+        matrix.b = userImagePerspectiveY / 200;
+        matrix.c = userImagePerspectiveX / 200;
+        matrix.d = 1 + userImagePerspectiveY / 100;
+        ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
+      }
+      
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
     }

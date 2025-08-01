@@ -41,12 +41,16 @@ export default function Home() {
     userImageScale,
     userImageRotation,
     userImageFlipped,
+    userImagePerspectiveX,
+    userImagePerspectiveY,
     isDraggingUserImage,
     handleUserImageMouseDown,
     handleMouseMove: handleUserImageMouseMove,
     handleMouseUp: handleUserImageMouseUp,
     adjustScale: adjustUserImageScale,
     adjustRotation: adjustUserImageRotation,
+    adjustPerspectiveX: adjustUserImagePerspectiveX,
+    adjustPerspectiveY: adjustUserImagePerspectiveY,
     toggleFlip: toggleUserImageFlip,
     resetUserImageTransform,
     setUserImagePosition,
@@ -125,6 +129,8 @@ export default function Home() {
         userImageScale,
         userImageRotation,
         userImageFlipped,
+        userImagePerspectiveX,
+        userImagePerspectiveY,
         isPreview: true,
       });
     } catch (error) {
@@ -140,6 +146,8 @@ export default function Home() {
     userImageScale,
     userImageRotation,
     userImageFlipped,
+    userImagePerspectiveX,
+    userImagePerspectiveY,
   ]);
 
   useEffect(() => {
@@ -194,6 +202,8 @@ export default function Home() {
         userImageScale,
         userImageRotation,
         userImageFlipped,
+        userImagePerspectiveX,
+        userImagePerspectiveY,
         isPreview: false,
       });
 
@@ -223,6 +233,8 @@ export default function Home() {
     userImageScale,
     userImageRotation,
     userImageFlipped,
+    userImagePerspectiveX,
+    userImagePerspectiveY,
   ]);
 
   const resetImages = useCallback(() => {
@@ -398,6 +410,8 @@ export default function Home() {
           userImageScale={userImageScale}
           userImageRotation={userImageRotation}
           userImageFlipped={userImageFlipped}
+          userImagePerspectiveX={userImagePerspectiveX}
+          userImagePerspectiveY={userImagePerspectiveY}
           isImageLoaded={isImageLoaded}
           isDraggingHelmet={isDraggingHelmet}
           isDraggingUserImage={isDraggingUserImage}
@@ -411,6 +425,8 @@ export default function Home() {
           onScaleAdjust={adjustScale}
           onUserImageScaleAdjust={adjustUserImageScale}
           onUserImageRotationAdjust={adjustUserImageRotation}
+          onUserImagePerspectiveXAdjust={adjustUserImagePerspectiveX}
+          onUserImagePerspectiveYAdjust={adjustUserImagePerspectiveY}
           onUserImageFlipToggle={toggleUserImageFlip}
           onResetPosition={resetHelmetPosition}
           onResetUserImageTransform={resetUserImageTransform}
