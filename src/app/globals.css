@@ -33,6 +33,15 @@ canvas {
   border-radius: 12px;
 }
 
+/* Button cursor styling */
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* Focus states */
 *:focus {
   outline: none;
