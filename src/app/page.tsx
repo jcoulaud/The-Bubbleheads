@@ -1,8 +1,8 @@
 'use client';
 
-import { Moon, Sun } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import EditorInterface from './components/EditorInterface';
+import SocialLinks from './components/SocialLinks';
 import UploadSection from './components/UploadSection';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useHelmetControls } from './hooks/useHelmetControls';
@@ -21,7 +21,7 @@ export default function Home() {
   const [useBackground, setUseBackground] = useState(true);
   const [editMode, setEditMode] = useState<'helmet' | 'user'>('helmet');
 
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { isDarkMode } = useDarkMode();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -291,203 +291,169 @@ export default function Home() {
   }, [editMode, handleHelmetMouseUp, handleUserImageMouseUp]);
 
   return (
-    <main className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
-      {/* Dark Mode Toggle */}
-      <div className='fixed top-4 right-4 z-50'>
-        <button
-          onClick={toggleDarkMode}
-          className='p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 dark:border-gray-700'
-          aria-label='Toggle dark mode'
-          type='button'>
-          {isDarkMode ? (
-            <Sun className='w-5 h-5 text-yellow-500' />
-          ) : (
-            <Moon className='w-5 h-5 text-gray-700 dark:text-gray-300' />
-          )}
-        </button>
-      </div>
-      {/* Hero Section */}
-      {!uploadedImage && !showPreview && (
-        <section className='py-12'>
-          <div className='max-w-4xl mx-auto px-6 text-center'>
-            <div className='relative mb-8'>
-              <div className='relative mb-4'>
-                <img
-                  src='/helmet.png'
-                  alt='Helmet'
-                  className='w-24 h-24 md:w-32 md:h-32 mx-auto animate-float opacity-90 drop-shadow-2xl'
-                />
+    <main className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col'>
+      <SocialLinks />
+      {/* Main Content */}
+      <div className='flex-1'>
+        {/* Hero Section */}
+        {!uploadedImage && !showPreview && (
+          <section className='py-8 md:py-12'>
+            <div className='max-w-4xl mx-auto px-6 text-center'>
+              <div className='relative mb-8'>
+                <div className='relative mb-4'>
+                  <img
+                    src='/helmet.png'
+                    alt='Helmet'
+                    className='w-24 h-24 md:w-32 md:h-32 mx-auto animate-float opacity-90 drop-shadow-2xl'
+                  />
+                </div>
+                <h1 className='relative text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-3 animate-fade-in'>
+                  Helmet Generator
+                </h1>
+                <div className='text-lg md:text-xl text-gray-600 dark:text-gray-400 font-medium mb-3'>
+                  for the
+                </div>
+                <div className='flex items-center justify-center gap-4 mb-6'>
+                  <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
+                  <h2 className='text-3xl md:text-4xl font-black text-blue-600 dark:text-blue-400 tracking-wider'>
+                    The Bubbleheads Community
+                  </h2>
+                  <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
+                </div>
               </div>
-              <h1 className='relative text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-2 animate-fade-in'>
-                Helmet Generator
-              </h1>
-              <div className='text-lg md:text-xl text-gray-600 dark:text-gray-400 font-medium mb-4'>
-                for the
-              </div>
-              <div className='flex items-center justify-center gap-4 mb-6'>
-                <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
-                <h2 className='text-3xl md:text-4xl font-black text-blue-600 dark:text-blue-400 tracking-wider'>
-                  The Bubbleheads Community
-                </h2>
-                <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
+
+              <div className='hidden md:flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400'>
+                <div className='flex items-center gap-2'>
+                  <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
+                    <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>1</span>
+                  </div>
+                  <span>Upload Photo</span>
+                </div>
+                <div className='w-px h-4 bg-gray-300 dark:bg-gray-600'></div>
+                <div className='flex items-center gap-2'>
+                  <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
+                    <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>2</span>
+                  </div>
+                  <span>Customize Helmet</span>
+                </div>
+                <div className='w-px h-4 bg-gray-300 dark:bg-gray-600'></div>
+                <div className='flex items-center gap-2'>
+                  <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
+                    <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>3</span>
+                  </div>
+                  <span>Download & Share</span>
+                </div>
               </div>
             </div>
+          </section>
+        )}
 
-            <div className='hidden md:flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400'>
-              <div className='flex items-center gap-2'>
-                <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
-                  <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>1</span>
-                </div>
-                <span>Upload Photo</span>
-              </div>
-              <div className='w-px h-4 bg-gray-300 dark:bg-gray-600'></div>
-              <div className='flex items-center gap-2'>
-                <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
-                  <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>2</span>
-                </div>
-                <span>Customize Helmet</span>
-              </div>
-              <div className='w-px h-4 bg-gray-300 dark:bg-gray-600'></div>
-              <div className='flex items-center gap-2'>
-                <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
-                  <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>3</span>
-                </div>
-                <span>Download & Share</span>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Error Message */}
-      {helmetImageError && (
-        <section className='py-8 px-6'>
-          <div className='max-w-2xl mx-auto'>
-            <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6'>
-              <div className='flex items-start'>
-                <div className='w-8 h-8 bg-red-500 dark:bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0'>
-                  <svg
-                    className='h-5 w-5 text-white'
-                    fill='none'
-                    viewBox='0 0 24 24'
-                    stroke='currentColor'>
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth={2}
-                      d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z'
-                    />
-                  </svg>
-                </div>
-                <div className='ml-4'>
-                  <h3 className='text-lg font-semibold text-red-800 dark:text-red-200 mb-2'>
-                    Setup Required
-                  </h3>
-                  <p className='text-red-700 dark:text-red-300 mb-4'>
-                    Please add your helmet image to complete the setup:
-                  </p>
-                  <div className='space-y-2 text-sm text-red-700 dark:text-red-300'>
-                    <div className='flex items-center gap-2'>
-                      <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
-                        1
-                      </span>
-                      <span>Save the helmet image as &quot;helmet.png&quot;</span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
-                        2
-                      </span>
-                      <span>Place it in the &quot;public/&quot; directory</span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
-                        3
-                      </span>
-                      <span>Refresh the page and try again</span>
+        {/* Error Message */}
+        {helmetImageError && (
+          <section className='py-8 px-6'>
+            <div className='max-w-2xl mx-auto'>
+              <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6'>
+                <div className='flex items-start'>
+                  <div className='w-8 h-8 bg-red-500 dark:bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0'>
+                    <svg
+                      className='h-5 w-5 text-white'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'>
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z'
+                      />
+                    </svg>
+                  </div>
+                  <div className='ml-4'>
+                    <h3 className='text-lg font-semibold text-red-800 dark:text-red-200 mb-2'>
+                      Setup Required
+                    </h3>
+                    <p className='text-red-700 dark:text-red-300 mb-4'>
+                      Please add your helmet image to complete the setup:
+                    </p>
+                    <div className='space-y-2 text-sm text-red-700 dark:text-red-300'>
+                      <div className='flex items-center gap-2'>
+                        <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                          1
+                        </span>
+                        <span>Save the helmet image as &quot;helmet.png&quot;</span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                          2
+                        </span>
+                        <span>Place it in the &quot;public/&quot; directory</span>
+                      </div>
+                      <div className='flex items-center gap-2'>
+                        <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                          3
+                        </span>
+                        <span>Refresh the page and try again</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* Upload Section */}
-      {!uploadedImage && (
-        <UploadSection
-          isDragging={isDragging}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          onFileSelect={handleImageUpload}
-          fileInputRef={fileInputRef}
-        />
-      )}
+        {/* Upload Section */}
+        {!uploadedImage && (
+          <UploadSection
+            isDragging={isDragging}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onFileSelect={handleImageUpload}
+            fileInputRef={fileInputRef}
+          />
+        )}
 
-      {/* Editor Interface */}
-      {showPreview && (
-        <EditorInterface
-          previewCanvasRef={previewCanvasRef}
-          previewContainerRef={previewContainerRef}
-          helmetPosition={helmetPosition}
-          helmetScale={helmetScale}
-          userImagePosition={userImagePosition}
-          userImageScale={userImageScale}
-          userImageRotation={userImageRotation}
-          userImageFlipped={userImageFlipped}
-          userImagePerspectiveX={userImagePerspectiveX}
-          userImagePerspectiveY={userImagePerspectiveY}
-          isImageLoaded={isImageLoaded}
-          isDraggingHelmet={isDraggingHelmet}
-          isDraggingUserImage={isDraggingUserImage}
-          useBackground={useBackground}
-          editMode={editMode}
-          onEditModeChange={setEditMode}
-          onBackgroundToggle={setUseBackground}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseDown={handleMouseDown}
-          onScaleAdjust={adjustScale}
-          onUserImageScaleAdjust={adjustUserImageScale}
-          onUserImageRotationAdjust={adjustUserImageRotation}
-          onUserImagePerspectiveXAdjust={adjustUserImagePerspectiveX}
-          onUserImagePerspectiveYAdjust={adjustUserImagePerspectiveY}
-          onUserImageFlipToggle={toggleUserImageFlip}
-          onResetPosition={resetHelmetPosition}
-          onResetUserImageTransform={resetUserImageTransform}
-          onProcessImage={downloadFinalImage}
-          onCancel={resetImages}
-          isProcessing={isProcessing}
-        />
-      )}
+        {/* Editor Interface */}
+        {showPreview && (
+          <EditorInterface
+            previewCanvasRef={previewCanvasRef}
+            previewContainerRef={previewContainerRef}
+            helmetPosition={helmetPosition}
+            helmetScale={helmetScale}
+            userImagePosition={userImagePosition}
+            userImageScale={userImageScale}
+            userImageRotation={userImageRotation}
+            userImageFlipped={userImageFlipped}
+            userImagePerspectiveX={userImagePerspectiveX}
+            userImagePerspectiveY={userImagePerspectiveY}
+            isImageLoaded={isImageLoaded}
+            isDraggingHelmet={isDraggingHelmet}
+            isDraggingUserImage={isDraggingUserImage}
+            useBackground={useBackground}
+            editMode={editMode}
+            onEditModeChange={setEditMode}
+            onBackgroundToggle={setUseBackground}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseDown={handleMouseDown}
+            onScaleAdjust={adjustScale}
+            onUserImageScaleAdjust={adjustUserImageScale}
+            onUserImageRotationAdjust={adjustUserImageRotation}
+            onUserImagePerspectiveXAdjust={adjustUserImagePerspectiveX}
+            onUserImagePerspectiveYAdjust={adjustUserImagePerspectiveY}
+            onUserImageFlipToggle={toggleUserImageFlip}
+            onResetPosition={resetHelmetPosition}
+            onResetUserImageTransform={resetUserImageTransform}
+            onProcessImage={downloadFinalImage}
+            onCancel={resetImages}
+            isProcessing={isProcessing}
+          />
+        )}
 
-      {/* Hidden Canvas */}
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-      {/* Footer */}
-      <footer className='mt-16 py-8 px-6 border-t border-gray-200 dark:border-gray-700'>
-        <div className='max-w-4xl mx-auto text-center'>
-          <p className='text-sm text-gray-600 dark:text-gray-400'>
-            made by a{' '}
-            <a
-              href='https://x.com/JulienCoulaud'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium'>
-              degen
-            </a>{' '}
-            for the{' '}
-            <a
-              href='https://x.com/TheBubble_Heads'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium'>
-              bubbleheads community
-            </a>
-          </p>
-        </div>
-      </footer>
+        {/* Hidden Canvas */}
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+      </div>
     </main>
   );
 }

@@ -1,16 +1,18 @@
 import {
+  ArrowLeft,
   Camera,
+  Copy,
   Download,
   FlipHorizontal,
   Minus,
   Move,
   Plus,
-  RefreshCw,
   RotateCcw,
   RotateCw,
   Target,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useKeyboardControls } from '../hooks/useKeyboardControls';
 import { Position } from '../types';
 
@@ -82,6 +84,32 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
   isProcessing,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+
+  const handleCopyImage = async () => {
+    if (!previewCanvasRef.current || isCopying) return;
+
+    setIsCopying(true);
+    try {
+      const blob = await new Promise<Blob | null>((resolve) => {
+        previewCanvasRef.current?.toBlob(resolve, 'image/png');
+      });
+
+      if (blob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': blob,
+          }),
+        ]);
+
+        toast.success('Image copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Failed to copy image:', error);
+    } finally {
+      setIsCopying(false);
+    }
+  };
 
   useKeyboardControls({
     helmetPosition,
@@ -95,7 +123,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
   return (
     <section className='py-8 px-6'>
       <div className='max-w-7xl mx-auto'>
-        <div className='mb-6 lg:mb-8 text-center'>
+        <div className='mb-6 lg:mb-8 mt-12 lg:mt-0 text-center'>
           <h2 className='text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
             Perfect Your Creation
           </h2>
@@ -106,7 +134,14 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
 
         <div className='flex flex-col lg:grid lg:grid-cols-5 gap-4 lg:gap-6'>
           {/* Compact Sidebar Controls */}
-          <div className='lg:col-span-2 space-y-4 order-2 lg:order-1'>
+          <div className='lg:col-span-2 space-y-4 order-2 lg:order-1 relative lg:pt-0'>
+            {/* Back Button for Desktop */}
+            <button
+              onClick={onCancel}
+              className='hidden lg:block absolute -top-12 left-0 p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all'
+              title='Go back'>
+              <ArrowLeft className='w-5 h-5' />
+            </button>
             {/* Mode & Style Selection */}
             <div className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 space-y-4'>
               {/* Edit Mode */}
@@ -437,10 +472,20 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                   {/* Quick Action Buttons */}
                   <div className='flex items-center gap-1 sm:gap-2'>
                     <button
-                      onClick={onCancel}
-                      className='p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-all'
-                      title='Start over'>
-                      <RefreshCw className='w-4 h-4' />
+                      onClick={handleCopyImage}
+                      disabled={isCopying}
+                      className='flex items-center gap-1 px-2 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:hover:bg-gray-500 disabled:bg-gray-400 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed'>
+                      {isCopying ? (
+                        <>
+                          <div className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin'></div>
+                          <span className='hidden sm:inline'>Copying...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className='w-4 h-4' />
+                          <span className='hidden sm:inline'>Copy</span>
+                        </>
+                      )}
                     </button>
                     <button
                       onClick={onProcessImage}
@@ -531,6 +576,17 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile Restart Button */}
+        <div className='lg:hidden mt-8 px-4'>
+          <button
+            onClick={onCancel}
+            className='w-full p-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-all flex items-center justify-center gap-2 font-medium border border-gray-200 dark:border-gray-700'
+            title='Start over'>
+            <RotateCcw className='w-5 h-5' />
+            Start Over
+          </button>
         </div>
       </div>
     </section>

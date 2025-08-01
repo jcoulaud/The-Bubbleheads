@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import LayoutWrapper from './components/LayoutWrapper';
 import './globals.css';
 
 // Configure Inter font with optimal settings for performance
@@ -42,7 +43,7 @@ export default function RootLayout({
     <html lang='en' className='scroll-smooth' suppressHydrationWarning>
       <body
         className={`${inter.variable} antialiased selection:bg-blue-600 selection:text-white font-sans bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100`}>
-        {children}
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
