@@ -445,7 +445,7 @@ export default function Home() {
           <p className='text-sm text-gray-600'>
             made by a{' '}
             <a
-              href='https://x.com/JulienCoulaud/status/1951264332165140624'
+              href='https://x.com/JulienCoulaud'
               target='_blank'
               rel='noopener noreferrer'
               className='text-blue-600 hover:text-blue-700 font-medium'>
