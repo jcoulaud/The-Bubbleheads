@@ -87,20 +87,20 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
   return (
     <section className='py-8 px-6'>
       <div className='max-w-7xl mx-auto'>
-        <div className='mb-8 text-center'>
-          <h2 className='text-2xl md:text-3xl font-bold text-gray-900 mb-2'>
+        <div className='mb-6 lg:mb-8 text-center'>
+          <h2 className='text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2'>
             Perfect Your Creation
           </h2>
-          <p className='text-gray-600'>
+          <p className='text-sm sm:text-base text-gray-600 px-4 sm:px-0'>
             Drag to position and use the controls to create your perfect space portrait.
           </p>
         </div>
 
-        <div className='grid lg:grid-cols-5 gap-6'>
+        <div className='flex flex-col lg:grid lg:grid-cols-5 gap-4 lg:gap-6'>
           {/* Compact Sidebar Controls */}
-          <div className='lg:col-span-2 space-y-4'>
+          <div className='lg:col-span-2 space-y-4 order-2 lg:order-1'>
             {/* Mode & Style Selection */}
-            <div className='bg-white border border-gray-200 rounded-lg p-4 space-y-4'>
+            <div className='bg-white border border-gray-200 rounded-lg p-3 sm:p-4 space-y-4'>
               {/* Edit Mode */}
               <div>
                 <h4 className='text-sm font-semibold text-gray-900 mb-3'>Edit Mode</h4>
@@ -158,7 +158,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
 
             {/* Context-Sensitive Controls */}
             {editMode === 'helmet' ? (
-              <div className='bg-white border border-gray-200 rounded-lg p-4 space-y-4'>
+              <div className='bg-white border border-gray-200 rounded-lg p-3 sm:p-4 space-y-4'>
                 <div className='flex items-center gap-2 mb-2'>
                   <Move className='w-4 h-4 text-blue-600' />
                   <span className='font-medium text-gray-900'>Helmet Controls</span>
@@ -175,7 +175,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                   <div className='flex items-center gap-2'>
                     <button
                       onClick={() => onScaleAdjust(-0.13)}
-                      className='p-1 hover:bg-gray-100 rounded'>
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <Minus className='w-3 h-3' />
                     </button>
                     <input
@@ -192,7 +192,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                     />
                     <button
                       onClick={() => onScaleAdjust(0.13)}
-                      className='p-1 hover:bg-gray-100 rounded'>
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <Plus className='w-3 h-3' />
                     </button>
                   </div>
@@ -206,7 +206,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                 </button>
               </div>
             ) : (
-              <div className='bg-white border border-gray-200 rounded-lg p-4 space-y-4'>
+              <div className='bg-white border border-gray-200 rounded-lg p-3 sm:p-4 space-y-4'>
                 <div className='flex items-center gap-2 mb-2'>
                   <Camera className='w-4 h-4 text-green-600' />
                   <span className='font-medium text-gray-900'>Picture Controls</span>
@@ -223,7 +223,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                   <div className='flex items-center gap-2'>
                     <button
                       onClick={() => onUserImageScaleAdjust(-0.1)}
-                      className='p-1 hover:bg-gray-100 rounded'>
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <Minus className='w-3 h-3' />
                     </button>
                     <input
@@ -240,7 +240,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                     />
                     <button
                       onClick={() => onUserImageScaleAdjust(0.1)}
-                      className='p-1 hover:bg-gray-100 rounded'>
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <Plus className='w-3 h-3' />
                     </button>
                   </div>
@@ -257,7 +257,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                   <div className='flex items-center gap-2'>
                     <button
                       onClick={() => onUserImageRotationAdjust(-15)}
-                      className='p-1 hover:bg-gray-100 rounded'>
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <RotateCcw className='w-3 h-3' />
                     </button>
                     <input
@@ -273,7 +273,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                     />
                     <button
                       onClick={() => onUserImageRotationAdjust(15)}
-                      className='p-1 hover:bg-gray-100 rounded'>
+                      className='p-2 hover:bg-gray-100 rounded touch-manipulation'>
                       <RotateCw className='w-3 h-3' />
                     </button>
                   </div>
@@ -315,7 +315,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
             )}
 
             {/* Quick Info */}
-            <div className='bg-gray-50 border border-gray-200 rounded-lg p-3'>
+            <div className='bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-3'>
               <div className='text-xs text-gray-500 mb-1'>Position</div>
               <div className='flex justify-between text-sm'>
                 <span className='text-blue-600 font-medium'>
@@ -337,14 +337,14 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
           </div>
 
           {/* Preview Canvas */}
-          <div className='lg:col-span-3'>
+          <div className='lg:col-span-3 order-1 lg:order-2'>
             <div className='bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden'>
               {/* Floating Toolbar */}
-              <div className='bg-gray-50 border-b border-gray-200 px-4 py-3'>
+              <div className='bg-gray-50 border-b border-gray-200 px-3 sm:px-4 py-2 sm:py-3'>
                 <div className='flex items-center justify-between'>
-                  <div className='flex items-center gap-3'>
+                  <div className='flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3'>
                     <h3 className='font-semibold text-gray-900'>Live Preview</h3>
-                    <span className='text-sm text-gray-500'>
+                    <span className='text-xs sm:text-sm text-gray-500'>
                       {editMode === 'helmet'
                         ? 'Drag helmet to position'
                         : 'Drag, resize & rotate picture'}
@@ -352,7 +352,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                   </div>
 
                   {/* Quick Action Buttons */}
-                  <div className='flex items-center gap-2'>
+                  <div className='flex items-center gap-1 sm:gap-2'>
                     <button
                       onClick={onCancel}
                       className='p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-all'
@@ -362,16 +362,16 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                     <button
                       onClick={onProcessImage}
                       disabled={isProcessing}
-                      className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed'>
+                      className='flex items-center gap-1 px-2 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-all disabled:cursor-not-allowed'>
                       {isProcessing ? (
                         <>
                           <div className='w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin'></div>
-                          Processing...
+                          <span className='hidden sm:inline'>Processing...</span>
                         </>
                       ) : (
                         <>
                           <Download className='w-4 h-4' />
-                          Download
+                          <span className='hidden sm:inline'>Download</span>
                         </>
                       )}
                     </button>
@@ -380,7 +380,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
               </div>
 
               {/* Canvas Container */}
-              <div className='p-6'>
+              <div className='p-3 sm:p-6'>
                 <div
                   ref={previewContainerRef}
                   role='application'
@@ -390,7 +390,7 @@ const EditorInterface: React.FC<EditorInterfaceProps> = ({
                       : 'Picture position preview. Click and drag to reposition your picture'
                   }
                   tabIndex={0}
-                  className='relative bg-gray-50 rounded-lg overflow-hidden cursor-move aspect-square border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                  className='relative bg-gray-50 rounded-lg overflow-hidden cursor-move aspect-square border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 touch-pan-x touch-pan-y'
                   onMouseMove={onMouseMove}
                   onMouseUp={onMouseUp}
                   onMouseDown={onMouseDown}
