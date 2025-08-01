@@ -285,13 +285,13 @@ export default function Home() {
                 />
               </div>
               <h1 className='relative text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2 animate-fade-in'>
-                HELMET GENERATOR
+                Helmet Generator
               </h1>
               <div className='text-lg md:text-xl text-gray-600 font-medium mb-4'>for the</div>
               <div className='flex items-center justify-center gap-4 mb-6'>
                 <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
                 <h2 className='text-3xl md:text-4xl font-black text-blue-600 tracking-wider'>
-                  The Bubbleheads COMMUNITY
+                  The Bubbleheads Community
                 </h2>
                 <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
               </div>
