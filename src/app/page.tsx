@@ -1,8 +1,10 @@
 'use client';
 
+import { Moon, Sun } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import EditorInterface from './components/EditorInterface';
 import UploadSection from './components/UploadSection';
+import { useDarkMode } from './hooks/useDarkMode';
 import { useHelmetControls } from './hooks/useHelmetControls';
 import { useUserImageControls } from './hooks/useUserImageControls';
 import type { Position } from './types';
@@ -18,6 +20,8 @@ export default function Home() {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [useBackground, setUseBackground] = useState(true);
   const [editMode, setEditMode] = useState<'helmet' | 'user'>('helmet');
+
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -132,6 +136,7 @@ export default function Home() {
         userImagePerspectiveX,
         userImagePerspectiveY,
         isPreview: true,
+        isDarkMode,
       });
     } catch (error) {
       console.error('Error rendering preview:', error);
@@ -148,6 +153,7 @@ export default function Home() {
     userImageFlipped,
     userImagePerspectiveX,
     userImagePerspectiveY,
+    isDarkMode,
   ]);
 
   useEffect(() => {
@@ -205,6 +211,7 @@ export default function Home() {
         userImagePerspectiveX,
         userImagePerspectiveY,
         isPreview: false,
+        isDarkMode,
       });
 
       canvas.toBlob((blob) => {
@@ -235,6 +242,7 @@ export default function Home() {
     userImageFlipped,
     userImagePerspectiveX,
     userImagePerspectiveY,
+    isDarkMode,
   ]);
 
   const resetImages = useCallback(() => {
@@ -283,7 +291,21 @@ export default function Home() {
   }, [editMode, handleHelmetMouseUp, handleUserImageMouseUp]);
 
   return (
-    <main className='min-h-screen bg-gray-50'>
+    <main className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200'>
+      {/* Dark Mode Toggle */}
+      <div className='fixed top-4 right-4 z-50'>
+        <button
+          onClick={toggleDarkMode}
+          className='p-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 border border-gray-200 dark:border-gray-700'
+          aria-label='Toggle dark mode'
+          type='button'>
+          {isDarkMode ? (
+            <Sun className='w-5 h-5 text-yellow-500' />
+          ) : (
+            <Moon className='w-5 h-5 text-gray-700 dark:text-gray-300' />
+          )}
+        </button>
+      </div>
       {/* Hero Section */}
       {!uploadedImage && !showPreview && (
         <section className='py-12'>
@@ -296,37 +318,39 @@ export default function Home() {
                   className='w-24 h-24 md:w-32 md:h-32 mx-auto animate-float opacity-90 drop-shadow-2xl'
                 />
               </div>
-              <h1 className='relative text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2 animate-fade-in'>
+              <h1 className='relative text-5xl md:text-6xl lg:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 mb-2 animate-fade-in'>
                 Helmet Generator
               </h1>
-              <div className='text-lg md:text-xl text-gray-600 font-medium mb-4'>for the</div>
+              <div className='text-lg md:text-xl text-gray-600 dark:text-gray-400 font-medium mb-4'>
+                for the
+              </div>
               <div className='flex items-center justify-center gap-4 mb-6'>
                 <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
-                <h2 className='text-3xl md:text-4xl font-black text-blue-600 tracking-wider'>
+                <h2 className='text-3xl md:text-4xl font-black text-blue-600 dark:text-blue-400 tracking-wider'>
                   The Bubbleheads Community
                 </h2>
                 <div className='h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent flex-1 max-w-[100px]'></div>
               </div>
             </div>
 
-            <div className='hidden md:flex items-center justify-center gap-6 text-sm text-gray-500'>
+            <div className='hidden md:flex items-center justify-center gap-6 text-sm text-gray-500 dark:text-gray-400'>
               <div className='flex items-center gap-2'>
-                <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
-                  <span className='text-blue-600 text-xs font-bold'>1</span>
+                <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
+                  <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>1</span>
                 </div>
                 <span>Upload Photo</span>
               </div>
-              <div className='w-px h-4 bg-gray-300'></div>
+              <div className='w-px h-4 bg-gray-300 dark:bg-gray-600'></div>
               <div className='flex items-center gap-2'>
-                <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
-                  <span className='text-blue-600 text-xs font-bold'>2</span>
+                <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
+                  <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>2</span>
                 </div>
                 <span>Customize Helmet</span>
               </div>
-              <div className='w-px h-4 bg-gray-300'></div>
+              <div className='w-px h-4 bg-gray-300 dark:bg-gray-600'></div>
               <div className='flex items-center gap-2'>
-                <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
-                  <span className='text-blue-600 text-xs font-bold'>3</span>
+                <div className='w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center'>
+                  <span className='text-blue-600 dark:text-blue-400 text-xs font-bold'>3</span>
                 </div>
                 <span>Download & Share</span>
               </div>
@@ -339,9 +363,9 @@ export default function Home() {
       {helmetImageError && (
         <section className='py-8 px-6'>
           <div className='max-w-2xl mx-auto'>
-            <div className='bg-red-50 border border-red-200 rounded-lg p-6'>
+            <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6'>
               <div className='flex items-start'>
-                <div className='w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0'>
+                <div className='w-8 h-8 bg-red-500 dark:bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0'>
                   <svg
                     className='h-5 w-5 text-white'
                     fill='none'
@@ -356,25 +380,27 @@ export default function Home() {
                   </svg>
                 </div>
                 <div className='ml-4'>
-                  <h3 className='text-lg font-semibold text-red-800 mb-2'>Setup Required</h3>
-                  <p className='text-red-700 mb-4'>
+                  <h3 className='text-lg font-semibold text-red-800 dark:text-red-200 mb-2'>
+                    Setup Required
+                  </h3>
+                  <p className='text-red-700 dark:text-red-300 mb-4'>
                     Please add your helmet image to complete the setup:
                   </p>
-                  <div className='space-y-2 text-sm text-red-700'>
+                  <div className='space-y-2 text-sm text-red-700 dark:text-red-300'>
                     <div className='flex items-center gap-2'>
-                      <span className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                      <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
                         1
                       </span>
                       <span>Save the helmet image as &quot;helmet.png&quot;</span>
                     </div>
                     <div className='flex items-center gap-2'>
-                      <span className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                      <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
                         2
                       </span>
                       <span>Place it in the &quot;public/&quot; directory</span>
                     </div>
                     <div className='flex items-center gap-2'>
-                      <span className='w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold'>
+                      <span className='w-5 h-5 bg-red-500 dark:bg-red-600 rounded-full flex items-center justify-center text-white text-xs font-bold'>
                         3
                       </span>
                       <span>Refresh the page and try again</span>
@@ -440,15 +466,15 @@ export default function Home() {
       <canvas ref={canvasRef} style={{ display: 'none' }} />
 
       {/* Footer */}
-      <footer className='mt-16 py-8 px-6 border-t border-gray-200'>
+      <footer className='mt-16 py-8 px-6 border-t border-gray-200 dark:border-gray-700'>
         <div className='max-w-4xl mx-auto text-center'>
-          <p className='text-sm text-gray-600'>
+          <p className='text-sm text-gray-600 dark:text-gray-400'>
             made by a{' '}
             <a
               href='https://x.com/JulienCoulaud'
               target='_blank'
               rel='noopener noreferrer'
-              className='text-blue-600 hover:text-blue-700 font-medium'>
+              className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium'>
               degen
             </a>{' '}
             for the{' '}
@@ -456,7 +482,7 @@ export default function Home() {
               href='https://x.com/TheBubble_Heads'
               target='_blank'
               rel='noopener noreferrer'
-              className='text-blue-600 hover:text-blue-700 font-medium'>
+              className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium'>
               bubbleheads community
             </a>
           </p>

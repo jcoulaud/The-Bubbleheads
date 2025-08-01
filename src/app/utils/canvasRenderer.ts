@@ -41,6 +41,7 @@ interface RenderConfig {
   userImagePerspectiveX?: number;
   userImagePerspectiveY?: number;
   isPreview?: boolean;
+  isDarkMode?: boolean;
 }
 
 export async function renderHelmetImage(config: RenderConfig): Promise<void> {
@@ -57,6 +58,7 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
     userImagePerspectiveX = 0,
     userImagePerspectiveY = 0,
     isPreview = false,
+    isDarkMode = false,
   } = config;
 
   const ctx = canvas.getContext('2d');
@@ -89,11 +91,12 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
 
   if (isPreview) {
     const containerSize = canvas.width;
-    
+
     // Clear the canvas first
     ctx.clearRect(0, 0, containerSize, containerSize);
-    
-    const scale = Math.min(containerSize / userImg.width, containerSize / userImg.height) * userImageScale;
+
+    const scale =
+      Math.min(containerSize / userImg.width, containerSize / userImg.height) * userImageScale;
     const scaledWidth = userImg.width * scale;
     const scaledHeight = userImg.height * scale;
     const centerX = containerSize * userImagePosition.x;
@@ -123,7 +126,7 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
-      
+
       // Apply perspective transformation
       if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
         const matrix = new DOMMatrix();
@@ -133,15 +136,16 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         matrix.d = 1 + userImagePerspectiveY / 100;
         ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
       }
-      
+
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
-      
+
       ctx.restore();
     } else {
-      ctx.fillStyle = '#f9fafb';
+      // Use dark background in dark mode, light background in light mode
+      ctx.fillStyle = isDarkMode ? '#374151' : '#f9fafb';
       ctx.fillRect(0, 0, containerSize, containerSize);
-      
+
       // Apply user image transformations with perspective
       ctx.save();
       ctx.translate(centerX, centerY);
@@ -149,7 +153,7 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
-      
+
       // Apply perspective transformation
       if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
         const matrix = new DOMMatrix();
@@ -159,7 +163,7 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         matrix.d = 1 + userImagePerspectiveY / 100;
         ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
       }
-      
+
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
     }
@@ -192,13 +196,13 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       const centerY = canvas.height * userImagePosition.y;
       const scaledWidth = userImg.width * userImageScale;
       const scaledHeight = userImg.height * userImageScale;
-      
+
       ctx.translate(centerX, centerY);
       if (userImageFlipped) {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
-      
+
       // Apply perspective transformation
       if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
         const matrix = new DOMMatrix();
@@ -208,10 +212,10 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         matrix.d = 1 + userImagePerspectiveY / 100;
         ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
       }
-      
+
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
-      
+
       ctx.restore();
     } else {
       // Apply user image transformations for final export with perspective
@@ -220,13 +224,13 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       const centerY = canvas.height * userImagePosition.y;
       const scaledWidth = userImg.width * userImageScale;
       const scaledHeight = userImg.height * userImageScale;
-      
+
       ctx.translate(centerX, centerY);
       if (userImageFlipped) {
         ctx.scale(-1, 1);
       }
       ctx.rotate((userImageRotation * Math.PI) / 180);
-      
+
       // Apply perspective transformation
       if (userImagePerspectiveX !== 0 || userImagePerspectiveY !== 0) {
         const matrix = new DOMMatrix();
@@ -236,7 +240,7 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
         matrix.d = 1 + userImagePerspectiveY / 100;
         ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f);
       }
-      
+
       ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
       ctx.restore();
     }
