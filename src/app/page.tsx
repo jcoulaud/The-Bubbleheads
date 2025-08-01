@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import EditorInterface from './components/EditorInterface';
 import UploadSection from './components/UploadSection';
 import { useHelmetControls } from './hooks/useHelmetControls';
+import { useUserImageControls } from './hooks/useUserImageControls';
 import type { Position } from './types';
 import { renderHelmetImage } from './utils/canvasRenderer';
 
@@ -16,6 +17,7 @@ export default function Home() {
   const [showPreview, setShowPreview] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [useBackground, setUseBackground] = useState(true);
+  const [editMode, setEditMode] = useState<'helmet' | 'user'>('helmet');
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -27,12 +29,28 @@ export default function Home() {
     helmetScale,
     isDraggingHelmet,
     handleHelmetMouseDown,
-    handleMouseMove,
-    handleMouseUp,
+    handleMouseMove: handleHelmetMouseMove,
+    handleMouseUp: handleHelmetMouseUp,
     adjustScale,
     resetHelmetPosition,
     setHelmetPosition,
   } = useHelmetControls(previewContainerRef);
+
+  const {
+    userImagePosition,
+    userImageScale,
+    userImageRotation,
+    userImageFlipped,
+    isDraggingUserImage,
+    handleUserImageMouseDown,
+    handleMouseMove: handleUserImageMouseMove,
+    handleMouseUp: handleUserImageMouseUp,
+    adjustScale: adjustUserImageScale,
+    adjustRotation: adjustUserImageRotation,
+    toggleFlip: toggleUserImageFlip,
+    resetUserImageTransform,
+    setUserImagePosition,
+  } = useUserImageControls(previewContainerRef);
 
   const handleFile = useCallback((file: File) => {
     if (file && file.type.startsWith('image/')) {
@@ -91,7 +109,6 @@ export default function Home() {
     const container = previewContainerRef.current;
     const containerSize = container.clientWidth;
 
-    // Only update canvas dimensions if they've changed
     if (canvas.width !== containerSize || canvas.height !== containerSize) {
       canvas.width = containerSize;
       canvas.height = containerSize;
@@ -104,27 +121,40 @@ export default function Home() {
         helmetPosition,
         helmetScale,
         useBackground,
+        userImagePosition,
+        userImageScale,
+        userImageRotation,
+        userImageFlipped,
         isPreview: true,
       });
     } catch (error) {
       console.error('Error rendering preview:', error);
       setHelmetImageError(true);
     }
-  }, [uploadedImage, helmetPosition, helmetScale, useBackground]);
+  }, [
+    uploadedImage,
+    helmetPosition,
+    helmetScale,
+    useBackground,
+    userImagePosition,
+    userImageScale,
+    userImageRotation,
+    userImageFlipped,
+  ]);
 
   useEffect(() => {
     if (!showPreview) return;
-    
+
     let animationFrameId: number;
-    
+
     const scheduleUpdate = () => {
       animationFrameId = requestAnimationFrame(() => {
         updatePreview();
       });
     };
-    
+
     scheduleUpdate();
-    
+
     return () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
@@ -160,6 +190,10 @@ export default function Home() {
         helmetPosition,
         helmetScale,
         useBackground,
+        userImagePosition,
+        userImageScale,
+        userImageRotation,
+        userImageFlipped,
         isPreview: false,
       });
 
@@ -179,19 +213,62 @@ export default function Home() {
       setHelmetImageError(true);
       setIsProcessing(false);
     }
-  }, [uploadedImage, originalFilename, helmetPosition, helmetScale, useBackground]);
+  }, [
+    uploadedImage,
+    originalFilename,
+    helmetPosition,
+    helmetScale,
+    useBackground,
+    userImagePosition,
+    userImageScale,
+    userImageRotation,
+    userImageFlipped,
+  ]);
 
   const resetImages = useCallback(() => {
     setUploadedImage(null);
     setOriginalFilename('');
     setShowPreview(false);
     resetHelmetPosition();
+    resetUserImageTransform();
     setIsImageLoaded(false);
     setUseBackground(true);
+    setEditMode('helmet');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [resetHelmetPosition]);
+  }, [resetHelmetPosition, resetUserImageTransform]);
+
+  // Combined mouse handlers that delegate based on edit mode
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (editMode === 'helmet') {
+        handleHelmetMouseDown(e);
+      } else {
+        handleUserImageMouseDown(e);
+      }
+    },
+    [editMode, handleHelmetMouseDown, handleUserImageMouseDown],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (editMode === 'helmet') {
+        handleHelmetMouseMove(e);
+      } else {
+        handleUserImageMouseMove(e);
+      }
+    },
+    [editMode, handleHelmetMouseMove, handleUserImageMouseMove],
+  );
+
+  const handleMouseUp = useCallback(() => {
+    if (editMode === 'helmet') {
+      handleHelmetMouseUp();
+    } else {
+      handleUserImageMouseUp();
+    }
+  }, [editMode, handleHelmetMouseUp, handleUserImageMouseUp]);
 
   return (
     <main className='min-h-screen bg-gray-50'>
@@ -220,7 +297,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className='flex items-center justify-center gap-6 text-sm text-gray-500'>
+            <div className='hidden md:flex items-center justify-center gap-6 text-sm text-gray-500'>
               <div className='flex items-center gap-2'>
                 <div className='w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center'>
                   <span className='text-blue-600 text-xs font-bold'>1</span>
@@ -317,15 +394,26 @@ export default function Home() {
           previewContainerRef={previewContainerRef}
           helmetPosition={helmetPosition}
           helmetScale={helmetScale}
+          userImagePosition={userImagePosition}
+          userImageScale={userImageScale}
+          userImageRotation={userImageRotation}
+          userImageFlipped={userImageFlipped}
           isImageLoaded={isImageLoaded}
           isDraggingHelmet={isDraggingHelmet}
+          isDraggingUserImage={isDraggingUserImage}
           useBackground={useBackground}
+          editMode={editMode}
+          onEditModeChange={setEditMode}
           onBackgroundToggle={setUseBackground}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseDown={handleHelmetMouseDown}
+          onMouseDown={handleMouseDown}
           onScaleAdjust={adjustScale}
+          onUserImageScaleAdjust={adjustUserImageScale}
+          onUserImageRotationAdjust={adjustUserImageRotation}
+          onUserImageFlipToggle={toggleUserImageFlip}
           onResetPosition={resetHelmetPosition}
+          onResetUserImageTransform={resetUserImageTransform}
           onProcessImage={downloadFinalImage}
           onCancel={resetImages}
           isProcessing={isProcessing}

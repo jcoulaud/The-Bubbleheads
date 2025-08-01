@@ -6,6 +6,10 @@ interface RenderConfig {
   helmetPosition: Position;
   helmetScale: number;
   useBackground: boolean;
+  userImagePosition?: Position;
+  userImageScale?: number;
+  userImageRotation?: number;
+  userImageFlipped?: boolean;
   isPreview?: boolean;
 }
 
@@ -16,6 +20,10 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
     helmetPosition,
     helmetScale,
     useBackground,
+    userImagePosition = { x: 0.5, y: 0.5 },
+    userImageScale = 1,
+    userImageRotation = 0,
+    userImageFlipped = false,
     isPreview = false,
   } = config;
 
@@ -53,11 +61,11 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
     // Clear the canvas first
     ctx.clearRect(0, 0, containerSize, containerSize);
     
-    const scale = Math.min(containerSize / userImg.width, containerSize / userImg.height);
+    const scale = Math.min(containerSize / userImg.width, containerSize / userImg.height) * userImageScale;
     const scaledWidth = userImg.width * scale;
     const scaledHeight = userImg.height * scale;
-    const offsetX = (containerSize - scaledWidth) / 2;
-    const offsetY = (containerSize - scaledHeight) / 2;
+    const centerX = containerSize * userImagePosition.x;
+    const centerY = containerSize * userImagePosition.y;
 
     const helmetWidth = containerSize * helmetScale * 0.5;
     const helmetHeight = (helmetImg.height / helmetImg.width) * helmetWidth;
@@ -76,12 +84,30 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       ctx.arc(visorCenterX, visorCenterY, visorRadius, 0, Math.PI * 2);
       ctx.clip();
 
-      ctx.drawImage(userImg, offsetX, offsetY, scaledWidth, scaledHeight);
+      // Apply user image transformations
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      if (userImageFlipped) {
+        ctx.scale(-1, 1);
+      }
+      ctx.rotate((userImageRotation * Math.PI) / 180);
+      ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+      
       ctx.restore();
     } else {
       ctx.fillStyle = '#f9fafb';
       ctx.fillRect(0, 0, containerSize, containerSize);
-      ctx.drawImage(userImg, offsetX, offsetY, scaledWidth, scaledHeight);
+      
+      // Apply user image transformations
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      if (userImageFlipped) {
+        ctx.scale(-1, 1);
+      }
+      ctx.rotate((userImageRotation * Math.PI) / 180);
+      ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
     }
 
     ctx.drawImage(helmetImg, helmetX, helmetY, helmetWidth, helmetHeight);
@@ -106,10 +132,37 @@ export async function renderHelmetImage(config: RenderConfig): Promise<void> {
       ctx.arc(visorCenterX, visorCenterY, visorRadius, 0, Math.PI * 2);
       ctx.clip();
 
-      ctx.drawImage(userImg, 0, 0);
+      // Apply user image transformations for final export
+      ctx.save();
+      const centerX = canvas.width * userImagePosition.x;
+      const centerY = canvas.height * userImagePosition.y;
+      const scaledWidth = userImg.width * userImageScale;
+      const scaledHeight = userImg.height * userImageScale;
+      
+      ctx.translate(centerX, centerY);
+      if (userImageFlipped) {
+        ctx.scale(-1, 1);
+      }
+      ctx.rotate((userImageRotation * Math.PI) / 180);
+      ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
+      
       ctx.restore();
     } else {
-      ctx.drawImage(userImg, 0, 0);
+      // Apply user image transformations for final export
+      ctx.save();
+      const centerX = canvas.width * userImagePosition.x;
+      const centerY = canvas.height * userImagePosition.y;
+      const scaledWidth = userImg.width * userImageScale;
+      const scaledHeight = userImg.height * userImageScale;
+      
+      ctx.translate(centerX, centerY);
+      if (userImageFlipped) {
+        ctx.scale(-1, 1);
+      }
+      ctx.rotate((userImageRotation * Math.PI) / 180);
+      ctx.drawImage(userImg, -scaledWidth / 2, -scaledHeight / 2, scaledWidth, scaledHeight);
+      ctx.restore();
     }
 
     ctx.drawImage(helmetImg, helmetX, helmetY, helmetWidth, helmetHeight);
