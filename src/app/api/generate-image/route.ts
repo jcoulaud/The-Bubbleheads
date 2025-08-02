@@ -4,10 +4,10 @@ import sharp from 'sharp';
 
 export async function POST(request: Request) {
   try {
-    const { prompt, useStreaming = true } = await request.json();
+    const { prompt, useStreaming = true, customImage } = await request.json();
 
-    if (!prompt) {
-      return new Response(JSON.stringify({ error: 'Prompt is required' }), {
+    if (!prompt && !customImage) {
+      return new Response(JSON.stringify({ error: 'Either prompt or image is required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -21,15 +21,62 @@ export async function POST(request: Request) {
       });
     }
 
-    // Load and convert the helmet image to PNG
-    const helmetImagePath = path.join(process.cwd(), 'public', 'original-helmet.jpeg');
-    const helmetImageBuffer = await fs.readFile(helmetImagePath);
+    let finalImageBuffer: Buffer;
 
-    // Convert JPEG to PNG using sharp
-    const pngBuffer = await sharp(helmetImageBuffer).png().toBuffer();
+    if (customImage) {
+      // Process custom image
+      const base64Data = customImage.replace(/^data:image\/\w+;base64,/, '');
+      const customImageBuffer = Buffer.from(base64Data, 'base64');
 
-    // Create the final prompt using the exact template
-    const finalPrompt = `A ${prompt} wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+      // Load helmet image
+      const helmetImagePath = path.join(process.cwd(), 'public', 'original-helmet.jpeg');
+      const helmetImageBuffer = await fs.readFile(helmetImagePath);
+
+      // Composite images: put helmet on top of custom image
+      // First, resize custom image to 1024x1024
+      const resizedCustomImage = await sharp(customImageBuffer)
+        .resize(1024, 1024, { fit: 'cover' })
+        .toBuffer();
+
+      // Resize helmet to appropriate size (e.g., 400x400) and position it
+      const resizedHelmet = await sharp(helmetImageBuffer)
+        .resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .toBuffer();
+
+      // Composite the images
+      finalImageBuffer = await sharp(resizedCustomImage)
+        .composite([
+          {
+            input: resizedHelmet,
+            top: 100,
+            left: 312, // Center the helmet (1024 - 400) / 2
+          },
+        ])
+        .png()
+        .toBuffer();
+    } else {
+      // Use only helmet image
+      const helmetImagePath = path.join(process.cwd(), 'public', 'original-helmet.jpeg');
+      const helmetImageBuffer = await fs.readFile(helmetImagePath);
+
+      // Convert JPEG to PNG using sharp
+      finalImageBuffer = await sharp(helmetImageBuffer).png().toBuffer();
+    }
+
+    const pngBuffer = finalImageBuffer;
+
+    // Create the final prompt based on whether custom image is provided
+    let finalPrompt: string;
+    if (customImage && prompt) {
+      // Both image and prompt provided
+      finalPrompt = `The subject in the image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic. ${prompt}`;
+    } else if (customImage) {
+      // Only image provided
+      finalPrompt = `The subject in the image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic.`;
+    } else {
+      // Only prompt provided
+      finalPrompt = `A ${prompt} wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+    }
 
     // Create form data for the image edit endpoint
     const formData = new FormData();

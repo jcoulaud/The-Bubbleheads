@@ -144,7 +144,7 @@ export default function Home() {
     [handleFile],
   );
 
-  const handleAIGenerate = useCallback(async (prompt: string) => {
+  const handleAIGenerate = useCallback(async (prompt: string, customImage?: string | null) => {
     setIsGeneratingAI(true);
     setStreamProgress(0);
 
@@ -154,7 +154,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt, useStreaming: true }),
+        body: JSON.stringify({ prompt, useStreaming: true, customImage }),
       });
 
       if (!response.ok) {
