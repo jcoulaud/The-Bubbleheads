@@ -1,6 +1,9 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
+import AIGenerationModal from './components/AIGenerationModal';
+import AIPreview from './components/AIPreview';
 import EditorInterface from './components/EditorInterface';
 import SocialLinks from './components/SocialLinks';
 import UploadSection from './components/UploadSection';
@@ -20,10 +23,41 @@ export default function Home() {
   const [isImageLoaded, setIsImageLoaded] = useState(false);
   const [useBackground, setUseBackground] = useState(true);
   const [editMode, setEditMode] = useState<'helmet' | 'user'>('helmet');
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiGeneratedImage, setAIGeneratedImage] = useState<string | null>(null);
+  const [showAIPreview, setShowAIPreview] = useState(false);
+  const [streamProgress, setStreamProgress] = useState<number>(0);
 
   const { isDarkMode } = useDarkMode();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Smooth progress animation
+  useEffect(() => {
+    if (isGeneratingAI && streamProgress < 100) {
+      const timer = setInterval(() => {
+        setStreamProgress((prev) => {
+          const slowIncrement = 0.15; // ~0.15% per 100ms = 16.7 seconds per 25%
+
+          let nextMilestone;
+          if (prev < 25) nextMilestone = 25;
+          else if (prev < 50) nextMilestone = 50;
+          else if (prev < 75) nextMilestone = 75;
+          else nextMilestone = 100;
+
+          // Don't exceed the next milestone
+          const maxProgress = nextMilestone - 0.5;
+
+          // Apply increment
+          const newProgress = Math.min(prev + slowIncrement, maxProgress);
+          return newProgress;
+        });
+      }, 100);
+
+      return () => clearInterval(timer);
+    }
+  }, [isGeneratingAI, streamProgress]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const previewContainerRef = useRef<HTMLDivElement | null>(null);
@@ -109,6 +143,105 @@ export default function Home() {
     },
     [handleFile],
   );
+
+  const handleAIGenerate = useCallback(async (prompt: string) => {
+    setIsGeneratingAI(true);
+    setStreamProgress(0);
+
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt, useStreaming: true }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to generate image');
+      }
+
+      // Check if response is streaming
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('text/event-stream')) {
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No response body');
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let partialCount = 0;
+        const totalPartials = 4; // 3 partials + 1 final
+        let currentEvent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+
+            if (trimmedLine.startsWith('event:')) {
+              currentEvent = trimmedLine.substring(6).trim();
+            } else if (trimmedLine.startsWith('data:')) {
+              const dataStr = trimmedLine.substring(5).trim();
+
+              try {
+                const data = JSON.parse(dataStr);
+
+                if (currentEvent === 'image_edit.partial_image' && data.b64_json) {
+                  partialCount++;
+                  const progress = (partialCount / totalPartials) * 100;
+
+                  // Jump directly to the milestone
+                  setStreamProgress(progress);
+                  setAIGeneratedImage(`data:image/png;base64,${data.b64_json}`);
+
+                  // Show preview on first partial
+                  if (partialCount === 1) {
+                    setShowAIModal(false);
+                    setShowAIPreview(true);
+                  }
+                } else if (currentEvent === 'image_edit.completed' && data.b64_json) {
+                  setStreamProgress(100);
+                  setAIGeneratedImage(`data:image/png;base64,${data.b64_json}`);
+                  toast.success('AI image generated successfully!');
+                } else if (currentEvent === 'error') {
+                  throw new Error(data.error || 'Stream error');
+                }
+              } catch {
+                // Silently ignore parse errors
+              }
+            } else if (trimmedLine === '') {
+              // Empty line indicates end of an SSE message
+              currentEvent = '';
+            }
+          }
+        }
+      } else {
+        // Non-streaming response
+        const data = await response.json();
+
+        if (data.imageUrl) {
+          setAIGeneratedImage(data.imageUrl);
+          setShowAIModal(false);
+          setShowAIPreview(true);
+          toast.success('AI image generated successfully!');
+        }
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to generate image');
+      setShowAIModal(true);
+      setShowAIPreview(false);
+      setStreamProgress(0);
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  }, []);
 
   const updatePreview = useCallback(async () => {
     if (!uploadedImage || !previewCanvasRef.current || !previewContainerRef.current) return;
@@ -254,6 +387,9 @@ export default function Home() {
     setIsImageLoaded(false);
     setUseBackground(true);
     setEditMode('helmet');
+    setAIGeneratedImage(null);
+    setShowAIPreview(false);
+    setStreamProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -289,6 +425,26 @@ export default function Home() {
       handleUserImageMouseUp();
     }
   }, [editMode, handleHelmetMouseUp, handleUserImageMouseUp]);
+
+  // Show AI Preview if we have an AI generated image
+  if (showAIPreview && aiGeneratedImage) {
+    return (
+      <>
+        <SocialLinks />
+        <AIPreview
+          imageUrl={aiGeneratedImage}
+          onBack={resetImages}
+          onRegenerate={() => {
+            setShowAIPreview(false);
+            setShowAIModal(true);
+            setStreamProgress(0);
+          }}
+          progress={streamProgress}
+          isGenerating={isGeneratingAI}
+        />
+      </>
+    );
+  }
 
   return (
     <main className='min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200 flex flex-col'>
@@ -411,6 +567,7 @@ export default function Home() {
             onDrop={handleDrop}
             onFileSelect={handleImageUpload}
             fileInputRef={fileInputRef}
+            onAIGenerate={() => setShowAIModal(true)}
           />
         )}
 
@@ -453,6 +610,14 @@ export default function Home() {
 
         {/* Hidden Canvas */}
         <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+        {/* AI Generation Modal */}
+        <AIGenerationModal
+          isOpen={showAIModal}
+          onClose={() => setShowAIModal(false)}
+          onGenerate={handleAIGenerate}
+          isGenerating={isGeneratingAI}
+        />
       </div>
     </main>
   );
