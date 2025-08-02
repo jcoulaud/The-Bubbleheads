@@ -1,10 +1,6 @@
 'use client';
 
-import { useDarkMode } from '../hooks/useDarkMode';
-
 export default function SocialLinks() {
-  const { isDarkMode } = useDarkMode();
-
   return (
     <div className='fixed top-4 left-4 z-50 flex items-center gap-2'>
       <a
@@ -16,8 +12,7 @@ export default function SocialLinks() {
         <img
           src='/dyor-hub-clean.svg'
           alt='DYOR Hub'
-          className='w-5 h-5 opacity-90 group-hover:opacity-100 transition-opacity duration-200'
-          style={{ filter: isDarkMode ? 'invert(1) brightness(1)' : 'brightness(0.2)' }}
+          className='w-5 h-5 opacity-90 group-hover:opacity-100 transition-opacity duration-200 dark:invert'
         />
       </a>
       <a
@@ -29,8 +24,7 @@ export default function SocialLinks() {
         <img
           src='/axiom.svg'
           alt='Axiom'
-          className='w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity duration-200'
-          style={{ filter: isDarkMode ? 'invert(1)' : 'brightness(0.3)' }}
+          className='w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity duration-200 dark:invert'
         />
       </a>
       <a
@@ -54,8 +48,7 @@ export default function SocialLinks() {
         <img
           src='/dexscreener.svg'
           alt='DexScreener'
-          className='w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity duration-200'
-          style={{ filter: isDarkMode ? 'brightness(0) invert(1)' : 'brightness(0.2)' }}
+          className='w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity duration-200 dark:invert'
         />
       </a>
     </div>
