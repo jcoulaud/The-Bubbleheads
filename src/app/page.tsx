@@ -26,6 +26,7 @@ export default function Home() {
   const [showAIModal, setShowAIModal] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [aiGeneratedImage, setAIGeneratedImage] = useState<string | null>(null);
+  const [aiGeneratedFormat, setAIGeneratedFormat] = useState<'picture' | 'banner'>('picture');
   const [showAIPreview, setShowAIPreview] = useState(false);
   const [streamProgress, setStreamProgress] = useState<number>(0);
 
@@ -144,104 +145,112 @@ export default function Home() {
     [handleFile],
   );
 
-  const handleAIGenerate = useCallback(async (prompt: string, customImage?: string | null) => {
-    setIsGeneratingAI(true);
-    setStreamProgress(0);
+  const handleAIGenerate = useCallback(
+    async (
+      prompt: string,
+      customImage?: string | null,
+      format: 'picture' | 'banner' = 'picture',
+    ) => {
+      setIsGeneratingAI(true);
+      setStreamProgress(0);
+      setAIGeneratedFormat(format);
 
-    try {
-      const response = await fetch('/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt, useStreaming: true, customImage }),
-      });
+      try {
+        const response = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt, useStreaming: true, customImage, format }),
+        });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to generate image');
-      }
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to generate image');
+        }
 
-      // Check if response is streaming
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('text/event-stream')) {
-        const reader = response.body?.getReader();
-        if (!reader) throw new Error('No response body');
+        // Check if response is streaming
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('text/event-stream')) {
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error('No response body');
 
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let partialCount = 0;
-        const totalPartials = 4; // 3 partials + 1 final
-        let currentEvent = '';
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let partialCount = 0;
+          const totalPartials = 4; // 3 partials + 1 final
+          let currentEvent = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
 
-          for (const line of lines) {
-            const trimmedLine = line.trim();
+            for (const line of lines) {
+              const trimmedLine = line.trim();
 
-            if (trimmedLine.startsWith('event:')) {
-              currentEvent = trimmedLine.substring(6).trim();
-            } else if (trimmedLine.startsWith('data:')) {
-              const dataStr = trimmedLine.substring(5).trim();
+              if (trimmedLine.startsWith('event:')) {
+                currentEvent = trimmedLine.substring(6).trim();
+              } else if (trimmedLine.startsWith('data:')) {
+                const dataStr = trimmedLine.substring(5).trim();
 
-              try {
-                const data = JSON.parse(dataStr);
+                try {
+                  const data = JSON.parse(dataStr);
 
-                if (currentEvent === 'image_edit.partial_image' && data.b64_json) {
-                  partialCount++;
-                  const progress = (partialCount / totalPartials) * 100;
+                  if (currentEvent === 'image_edit.partial_image' && data.b64_json) {
+                    partialCount++;
+                    const progress = (partialCount / totalPartials) * 100;
 
-                  // Jump directly to the milestone
-                  setStreamProgress(progress);
-                  setAIGeneratedImage(`data:image/png;base64,${data.b64_json}`);
+                    // Jump directly to the milestone
+                    setStreamProgress(progress);
+                    setAIGeneratedImage(`data:image/png;base64,${data.b64_json}`);
 
-                  // Show preview on first partial
-                  if (partialCount === 1) {
-                    setShowAIModal(false);
-                    setShowAIPreview(true);
+                    // Show preview on first partial
+                    if (partialCount === 1) {
+                      setShowAIModal(false);
+                      setShowAIPreview(true);
+                    }
+                  } else if (currentEvent === 'image_edit.completed' && data.b64_json) {
+                    setStreamProgress(100);
+                    setAIGeneratedImage(`data:image/png;base64,${data.b64_json}`);
+                    toast.success('AI image generated successfully!');
+                  } else if (currentEvent === 'error') {
+                    throw new Error(data.error || 'Stream error');
                   }
-                } else if (currentEvent === 'image_edit.completed' && data.b64_json) {
-                  setStreamProgress(100);
-                  setAIGeneratedImage(`data:image/png;base64,${data.b64_json}`);
-                  toast.success('AI image generated successfully!');
-                } else if (currentEvent === 'error') {
-                  throw new Error(data.error || 'Stream error');
+                } catch {
+                  // Silently ignore parse errors
                 }
-              } catch {
-                // Silently ignore parse errors
+              } else if (trimmedLine === '') {
+                // Empty line indicates end of an SSE message
+                currentEvent = '';
               }
-            } else if (trimmedLine === '') {
-              // Empty line indicates end of an SSE message
-              currentEvent = '';
             }
           }
-        }
-      } else {
-        // Non-streaming response
-        const data = await response.json();
+        } else {
+          // Non-streaming response
+          const data = await response.json();
 
-        if (data.imageUrl) {
-          setAIGeneratedImage(data.imageUrl);
-          setShowAIModal(false);
-          setShowAIPreview(true);
-          toast.success('AI image generated successfully!');
+          if (data.imageUrl) {
+            setAIGeneratedImage(data.imageUrl);
+            setShowAIModal(false);
+            setShowAIPreview(true);
+            toast.success('AI image generated successfully!');
+          }
         }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Failed to generate image');
+        setShowAIModal(true);
+        setShowAIPreview(false);
+        setStreamProgress(0);
+      } finally {
+        setIsGeneratingAI(false);
       }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to generate image');
-      setShowAIModal(true);
-      setShowAIPreview(false);
-      setStreamProgress(0);
-    } finally {
-      setIsGeneratingAI(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const updatePreview = useCallback(async () => {
     if (!uploadedImage || !previewCanvasRef.current || !previewContainerRef.current) return;
@@ -388,6 +397,7 @@ export default function Home() {
     setUseBackground(true);
     setEditMode('helmet');
     setAIGeneratedImage(null);
+    setAIGeneratedFormat('picture');
     setShowAIPreview(false);
     setStreamProgress(0);
     if (fileInputRef.current) {
@@ -433,6 +443,7 @@ export default function Home() {
         <SocialLinks />
         <AIPreview
           imageUrl={aiGeneratedImage}
+          format={aiGeneratedFormat}
           onBack={resetImages}
           onRegenerate={() => {
             setShowAIPreview(false);

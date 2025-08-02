@@ -4,7 +4,7 @@ import sharp from 'sharp';
 
 export async function POST(request: Request) {
   try {
-    const { prompt, useStreaming = true, customImage } = await request.json();
+    const { prompt, useStreaming = true, customImage, format = 'picture' } = await request.json();
 
     if (!prompt && !customImage) {
       return new Response(JSON.stringify({ error: 'Either prompt or image is required' }), {
@@ -47,23 +47,23 @@ export async function POST(request: Request) {
           width: 1024,
           height: 512,
           channels: 4,
-          background: { r: 255, g: 255, b: 255, alpha: 1 }
-        }
-      })
-      .composite([
-        {
-          input: helmetResized,
-          left: 0,
-          top: 0
+          background: { r: 255, g: 255, b: 255, alpha: 1 },
         },
-        {
-          input: customResized,
-          left: 512,
-          top: 0
-        }
-      ])
-      .png()
-      .toBuffer();
+      })
+        .composite([
+          {
+            input: helmetResized,
+            left: 0,
+            top: 0,
+          },
+          {
+            input: customResized,
+            left: 512,
+            top: 0,
+          },
+        ])
+        .png()
+        .toBuffer();
     } else {
       // Use only helmet image when no custom image is provided
       pngBuffer = await sharp(helmetImageBuffer).png().toBuffer();
@@ -71,19 +71,24 @@ export async function POST(request: Request) {
 
     // Create the final prompt
     let finalPrompt: string;
+    const bannerModifier =
+      format === 'banner'
+        ? ' IMPORTANT: Create a wide landscape banner with a SMALL astronaut character. The character must be MUCH SMALLER, taking up only 50% of the frame height maximum. Pull the camera back significantly. The entire helmet and shoulders must be fully visible with lots of space above and below. Think of it as a wide establishing shot with a small astronaut floating in vast cosmic space. The character should appear distant, not close-up.'
+        : '';
+
     if (customImage) {
       // When custom image is provided, reference the composite layout
       if (prompt) {
-        finalPrompt = `Using the helmet design from the left image, create an image of ${prompt} wearing that exact helmet. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style shown on the left.`;
+        finalPrompt = `Using the helmet design from the left image, create an image of ${prompt} wearing that exact helmet. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style shown on the left.${bannerModifier}`;
       } else {
-        finalPrompt = `Make an image of the subject from the right image wearing the exact helmet shown in the left image. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style.`;
+        finalPrompt = `Make an image of the subject from the right image wearing the exact helmet shown in the left image. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style.${bannerModifier}`;
       }
     } else {
       // When no custom image, use standard prompt
       if (prompt) {
-        finalPrompt = `A ${prompt} wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+        finalPrompt = `A ${prompt} wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.${bannerModifier}`;
       } else {
-        finalPrompt = `Make an image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+        finalPrompt = `Make an image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.${bannerModifier}`;
       }
     }
 
@@ -94,7 +99,7 @@ export async function POST(request: Request) {
     formData.append('prompt', finalPrompt);
     formData.append('model', 'gpt-image-1');
     formData.append('n', '1');
-    formData.append('size', '1024x1024');
+    formData.append('size', format === 'banner' ? '1536x1024' : '1024x1024'); // Landscape for banner
     formData.append('quality', 'high');
 
     if (useStreaming) {
@@ -135,6 +140,7 @@ export async function POST(request: Request) {
 
           const decoder = new TextDecoder();
           let buffer = '';
+          let currentEvent = '';
 
           try {
             while (true) {
@@ -148,12 +154,48 @@ export async function POST(request: Request) {
               buffer = lines.pop() || '';
 
               for (const line of lines) {
-                if (line.trim()) {
-                  // Forward the SSE line directly
+                const trimmedLine = line.trim();
+
+                if (trimmedLine.startsWith('event:')) {
+                  currentEvent = trimmedLine.substring(6).trim();
                   controller.enqueue(encoder.encode(line + '\n'));
+                } else if (
+                  trimmedLine.startsWith('data:') &&
+                  format === 'banner' &&
+                  (currentEvent === 'image_edit.partial_image' ||
+                    currentEvent === 'image_edit.completed')
+                ) {
+                  // Process banner images
+                  const dataStr = trimmedLine.substring(5).trim();
+                  try {
+                    const data = JSON.parse(dataStr);
+                    if (data.b64_json) {
+                      // Resize the image for banner format
+                      const imageBuffer = Buffer.from(data.b64_json, 'base64');
+
+                      // Resize with cover to fill the entire banner without black bars
+                      const resizedBuffer = await sharp(imageBuffer)
+                        .resize(1500, 500, {
+                          fit: 'cover',
+                          position: 'center',
+                        })
+                        .toBuffer();
+
+                      // Send the resized image
+                      const resizedData = { ...data, b64_json: resizedBuffer.toString('base64') };
+                      controller.enqueue(encoder.encode(`data: ${JSON.stringify(resizedData)}\n`));
+                    } else {
+                      controller.enqueue(encoder.encode(line + '\n'));
+                    }
+                  } catch {
+                    controller.enqueue(encoder.encode(line + '\n'));
+                  }
                 } else {
-                  // Empty line (SSE message separator)
-                  controller.enqueue(encoder.encode('\n'));
+                  controller.enqueue(encoder.encode(line + '\n'));
+                }
+
+                if (trimmedLine === '') {
+                  currentEvent = '';
                 }
               }
             }
@@ -203,6 +245,24 @@ export async function POST(request: Request) {
       const imageBuffer = await imageResponse.arrayBuffer();
       const base64 = Buffer.from(imageBuffer).toString('base64');
       imageUrl = `data:image/png;base64,${base64}`;
+    }
+
+    // Handle banner format resizing
+    if (format === 'banner') {
+      const base64Data = imageUrl.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+
+      // Resize to banner dimensions (1500x500)
+      const resizedBuffer = await sharp(imageBuffer)
+        .resize(1500, 500, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .toBuffer();
+
+      // Convert back to base64
+      const resizedBase64 = resizedBuffer.toString('base64');
+      imageUrl = `data:image/png;base64,${resizedBase64}`;
     }
 
     return new Response(JSON.stringify({ imageUrl }), {

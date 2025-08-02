@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 interface AIGenerationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onGenerate: (prompt: string, customImage?: string | null) => void;
+  onGenerate: (prompt: string, customImage?: string | null, format?: 'picture' | 'banner') => void;
   isGenerating?: boolean;
 }
 
@@ -16,6 +16,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
   const [customPrompt, setCustomPrompt] = useState('');
   const [customImage, setCustomImage] = useState<string | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
+  const [format, setFormat] = useState<'picture' | 'banner'>('picture');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +42,7 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (customPrompt.trim() || customImage) {
-      onGenerate(customPrompt.trim(), customImage);
+      onGenerate(customPrompt.trim(), customImage, format);
     }
   };
 
@@ -76,13 +77,90 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
 
         {/* Content */}
         <form onSubmit={handleSubmit} className='p-6 space-y-6'>
+          {/* Format Selector */}
+          <div className='space-y-3'>
+            <h3 className='text-sm font-medium text-gray-700 dark:text-gray-300'>Choose format</h3>
+            <div className='grid grid-cols-2 gap-3'>
+              <button
+                type='button'
+                onClick={() => setFormat('picture')}
+                disabled={isGenerating}
+                className={`relative p-4 rounded-lg border-2 transition-all ${
+                  format === 'picture'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <div className='flex flex-col items-center gap-2'>
+                  <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center'>
+                    <div className='w-12 h-12 bg-purple-500 rounded'></div>
+                  </div>
+                  <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    Picture
+                  </span>
+                  <span className='text-xs text-gray-500 dark:text-gray-400'>1024×1024</span>
+                </div>
+                {format === 'picture' && (
+                  <div className='absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center'>
+                    <svg
+                      className='w-3 h-3 text-white'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'>
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={3}
+                        d='M5 13l4 4L19 7'
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+              <button
+                type='button'
+                onClick={() => setFormat('banner')}
+                disabled={isGenerating}
+                className={`relative p-4 rounded-lg border-2 transition-all ${
+                  format === 'banner'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                <div className='flex flex-col items-center gap-2'>
+                  <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center'>
+                    <div className='w-14 h-5 bg-purple-500 rounded'></div>
+                  </div>
+                  <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                    Banner
+                  </span>
+                  <span className='text-xs text-gray-500 dark:text-gray-400'>1500×500</span>
+                </div>
+                {format === 'banner' && (
+                  <div className='absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center'>
+                    <svg
+                      className='w-3 h-3 text-white'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'>
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={3}
+                        d='M5 13l4 4L19 7'
+                      />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+
           {/* Options Header */}
           <div className='text-center'>
             <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
               Choose your generation method
             </h3>
             <p className='text-sm text-gray-600 dark:text-gray-400'>
-              Use text, image, or both to create your AI avatar
+              Use text, image, or both to create your AI {format === 'banner' ? 'banner' : 'avatar'}
             </p>
           </div>
 
