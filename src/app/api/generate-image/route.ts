@@ -21,61 +21,70 @@ export async function POST(request: Request) {
       });
     }
 
-    let finalImageBuffer: Buffer;
+    // Always load the helmet image
+    const helmetImagePath = path.join(process.cwd(), 'public', 'original-helmet.jpeg');
+    const helmetImageBuffer = await fs.readFile(helmetImagePath);
+
+    let pngBuffer: Buffer;
 
     if (customImage) {
-      // Process custom image
+      // Process custom image and combine with helmet reference
       const base64Data = customImage.replace(/^data:image\/\w+;base64,/, '');
       const customImageBuffer = Buffer.from(base64Data, 'base64');
 
-      // Load helmet image
-      const helmetImagePath = path.join(process.cwd(), 'public', 'original-helmet.jpeg');
-      const helmetImageBuffer = await fs.readFile(helmetImagePath);
-
-      // Composite images: put helmet on top of custom image
-      // First, resize custom image to 1024x1024
-      const resizedCustomImage = await sharp(customImageBuffer)
-        .resize(1024, 1024, { fit: 'cover' })
+      // Resize both images
+      const helmetResized = await sharp(helmetImageBuffer)
+        .resize(512, 512, { fit: 'cover' })
         .toBuffer();
 
-      // Resize helmet to appropriate size (e.g., 400x400) and position it
-      const resizedHelmet = await sharp(helmetImageBuffer)
-        .resize(400, 400, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      const customResized = await sharp(customImageBuffer)
+        .resize(512, 512, { fit: 'cover' })
         .toBuffer();
 
-      // Composite the images
-      finalImageBuffer = await sharp(resizedCustomImage)
-        .composite([
-          {
-            input: resizedHelmet,
-            top: 100,
-            left: 312, // Center the helmet (1024 - 400) / 2
-          },
-        ])
-        .png()
-        .toBuffer();
+      // Create a composite image with both images side by side
+      pngBuffer = await sharp({
+        create: {
+          width: 1024,
+          height: 512,
+          channels: 4,
+          background: { r: 255, g: 255, b: 255, alpha: 1 }
+        }
+      })
+      .composite([
+        {
+          input: helmetResized,
+          left: 0,
+          top: 0
+        },
+        {
+          input: customResized,
+          left: 512,
+          top: 0
+        }
+      ])
+      .png()
+      .toBuffer();
     } else {
-      // Use only helmet image
-      const helmetImagePath = path.join(process.cwd(), 'public', 'original-helmet.jpeg');
-      const helmetImageBuffer = await fs.readFile(helmetImagePath);
-
-      // Convert JPEG to PNG using sharp
-      finalImageBuffer = await sharp(helmetImageBuffer).png().toBuffer();
+      // Use only helmet image when no custom image is provided
+      pngBuffer = await sharp(helmetImageBuffer).png().toBuffer();
     }
 
-    const pngBuffer = finalImageBuffer;
-
-    // Create the final prompt based on whether custom image is provided
+    // Create the final prompt
     let finalPrompt: string;
-    if (customImage && prompt) {
-      // Both image and prompt provided
-      finalPrompt = `The subject in the image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic. ${prompt}`;
-    } else if (customImage) {
-      // Only image provided
-      finalPrompt = `The subject in the image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic.`;
+    if (customImage) {
+      // When custom image is provided, reference the composite layout
+      if (prompt) {
+        finalPrompt = `Using the helmet design from the left image, create an image of ${prompt} wearing that exact helmet. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style shown on the left.`;
+      } else {
+        finalPrompt = `Make an image of the subject from the right image wearing the exact helmet shown in the left image. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style.`;
+      }
     } else {
-      // Only prompt provided
-      finalPrompt = `A ${prompt} wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+      // When no custom image, use standard prompt
+      if (prompt) {
+        finalPrompt = `A ${prompt} wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+      } else {
+        finalPrompt = `Make an image wearing a sleek, round space helmet with a reflective glass visor and colorful side panel, floating in outer space. The helmet is the same style as classic astronaut helmets with a glossy, fishbowl-like dome. The background has glowing nebulae and stars. Art style is clean, vibrant digital illustration with soft highlights and smooth lines, matching a cartoon sci-fi aesthetic, same style as the picture used.`;
+      }
     }
 
     // Create form data for the image edit endpoint
