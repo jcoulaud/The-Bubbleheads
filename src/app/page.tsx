@@ -33,13 +33,14 @@ export default function Home() {
   const { isDarkMode } = useDarkMode();
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Smooth progress animation
   useEffect(() => {
     if (isGeneratingAI && streamProgress < 100) {
       const timer = setInterval(() => {
         setStreamProgress((prev) => {
-          const slowIncrement = 0.15; // ~0.15% per 100ms = 16.7 seconds per 25%
+          const slowIncrement = 0.1; // ~0.1% per 100ms = 25 seconds per 25%
 
           let nextMilestone;
           if (prev < 25) nextMilestone = 25;
@@ -151,6 +152,14 @@ export default function Home() {
       customImage?: string | null,
       format: 'picture' | 'banner' = 'picture',
     ) => {
+      // Cancel any existing generation
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new AbortController
+      abortControllerRef.current = new AbortController();
+
       setIsGeneratingAI(true);
       setStreamProgress(0);
       setAIGeneratedFormat(format);
@@ -162,6 +171,7 @@ export default function Home() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ prompt, useStreaming: true, customImage, format }),
+          signal: abortControllerRef.current.signal,
         });
 
         if (!response.ok) {
@@ -241,12 +251,18 @@ export default function Home() {
           }
         }
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to generate image');
+        // Don't show error for aborted requests
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('Generation cancelled');
+        } else {
+          toast.error(error instanceof Error ? error.message : 'Failed to generate image');
+        }
         setShowAIModal(true);
         setShowAIPreview(false);
         setStreamProgress(0);
       } finally {
         setIsGeneratingAI(false);
+        abortControllerRef.current = null;
       }
     },
     [],
@@ -388,6 +404,12 @@ export default function Home() {
   ]);
 
   const resetImages = useCallback(() => {
+    // Cancel any ongoing AI generation
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
     setUploadedImage(null);
     setOriginalFilename('');
     setShowPreview(false);
@@ -398,8 +420,9 @@ export default function Home() {
     setEditMode('helmet');
     setAIGeneratedImage(null);
     setAIGeneratedFormat('picture');
-    setShowAIPreview(false);
+    setIsGeneratingAI(false);
     setStreamProgress(0);
+    setShowAIPreview(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -446,6 +469,12 @@ export default function Home() {
           format={aiGeneratedFormat}
           onBack={resetImages}
           onRegenerate={() => {
+            // Cancel any ongoing AI generation
+            if (abortControllerRef.current) {
+              abortControllerRef.current.abort();
+              abortControllerRef.current = null;
+            }
+            setIsGeneratingAI(false);
             setShowAIPreview(false);
             setShowAIModal(true);
             setStreamProgress(0);
@@ -578,7 +607,16 @@ export default function Home() {
             onDrop={handleDrop}
             onFileSelect={handleImageUpload}
             fileInputRef={fileInputRef}
-            onAIGenerate={() => setShowAIModal(true)}
+            onAIGenerate={() => {
+              // Cancel any ongoing generation and reset state
+              if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+                abortControllerRef.current = null;
+              }
+              setIsGeneratingAI(false);
+              setStreamProgress(0);
+              setShowAIModal(true);
+            }}
           />
         )}
 
@@ -625,7 +663,16 @@ export default function Home() {
         {/* AI Generation Modal */}
         <AIGenerationModal
           isOpen={showAIModal}
-          onClose={() => setShowAIModal(false)}
+          onClose={() => {
+            // Cancel any ongoing generation when closing modal
+            if (abortControllerRef.current) {
+              abortControllerRef.current.abort();
+              abortControllerRef.current = null;
+            }
+            setIsGeneratingAI(false);
+            setStreamProgress(0);
+            setShowAIModal(false);
+          }}
           onGenerate={handleAIGenerate}
           isGenerating={isGeneratingAI}
         />

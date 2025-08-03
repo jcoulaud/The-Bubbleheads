@@ -49,11 +49,11 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50'>
-      <div className='relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto'>
+      <div className='relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-xl my-8 mx-auto max-h-[90vh] overflow-y-auto'>
         {/* Header */}
-        <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
-          <h2 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+        <div className='sticky top-0 z-10 flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'>
+          <h2 className='text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100'>
             AI Image Generation
           </h2>
           <button
@@ -76,33 +76,35 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className='p-6 space-y-6'>
+        <form onSubmit={handleSubmit} className='p-4 sm:p-6 space-y-4 sm:space-y-6'>
           {/* Format Selector */}
-          <div className='space-y-3'>
+          <div className='space-y-2'>
             <h3 className='text-sm font-medium text-gray-700 dark:text-gray-300'>Choose format</h3>
-            <div className='grid grid-cols-2 gap-3'>
+            <div className='grid grid-cols-2 gap-2'>
               <button
                 type='button'
                 onClick={() => setFormat('picture')}
                 disabled={isGenerating}
-                className={`relative p-4 rounded-lg border-2 transition-all ${
+                className={`relative p-3 rounded-lg border-2 transition-all ${
                   format === 'picture'
                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                     : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                 } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <div className='flex flex-col items-center gap-2'>
-                  <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center'>
-                    <div className='w-12 h-12 bg-purple-500 rounded'></div>
+                <div className='flex items-center justify-center gap-3'>
+                  <div className='w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center'>
+                    <div className='w-7 h-7 bg-purple-500 rounded'></div>
                   </div>
-                  <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                    Picture
-                  </span>
-                  <span className='text-xs text-gray-500 dark:text-gray-400'>1024×1024</span>
+                  <div className='flex flex-col text-left'>
+                    <span className='text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100'>
+                      Picture
+                    </span>
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>1024×1024</span>
+                  </div>
                 </div>
                 {format === 'picture' && (
-                  <div className='absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center'>
+                  <div className='absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center'>
                     <svg
-                      className='w-3 h-3 text-white'
+                      className='w-2.5 h-2.5 text-white'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'>
@@ -120,24 +122,26 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
                 type='button'
                 onClick={() => setFormat('banner')}
                 disabled={isGenerating}
-                className={`relative p-4 rounded-lg border-2 transition-all ${
+                className={`relative p-3 rounded-lg border-2 transition-all ${
                   format === 'banner'
                     ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
                     : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                 } ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                <div className='flex flex-col items-center gap-2'>
-                  <div className='w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center'>
-                    <div className='w-14 h-5 bg-purple-500 rounded'></div>
+                <div className='flex items-center justify-center gap-3'>
+                  <div className='w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center'>
+                    <div className='w-8 h-3 bg-purple-500 rounded'></div>
                   </div>
-                  <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                    Banner
-                  </span>
-                  <span className='text-xs text-gray-500 dark:text-gray-400'>1500×500</span>
+                  <div className='flex flex-col text-left'>
+                    <span className='text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100'>
+                      Banner
+                    </span>
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>1500×500</span>
+                  </div>
                 </div>
                 {format === 'banner' && (
-                  <div className='absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center'>
+                  <div className='absolute top-1 right-1 w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center'>
                     <svg
-                      className='w-3 h-3 text-white'
+                      className='w-2.5 h-2.5 text-white'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'>
@@ -156,10 +160,10 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
 
           {/* Options Header */}
           <div className='text-center'>
-            <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
+            <h3 className='text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 mb-1 sm:mb-2'>
               Choose your generation method
             </h3>
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <p className='text-xs sm:text-sm text-gray-600 dark:text-gray-400'>
               Use text, image, or both to create your AI {format === 'banner' ? 'banner' : 'avatar'}
             </p>
           </div>
@@ -217,8 +221,12 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
             <div className='space-y-2'>
               {!customImage ? (
                 <div
-                  onClick={() => fileInputRef.current?.click()}
-                  className='w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-purple-400 dark:hover:border-purple-400 transition-colors'>
+                  onClick={() => !isGenerating && fileInputRef.current?.click()}
+                  className={`w-full border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center transition-colors ${
+                    isGenerating
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'cursor-pointer hover:border-purple-400 dark:hover:border-purple-400'
+                  }`}>
                   <svg
                     className='mx-auto h-8 w-8 text-gray-400 dark:text-gray-500 mb-2'
                     fill='none'
@@ -258,7 +266,12 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
                   <button
                     type='button'
                     onClick={handleRemoveImage}
-                    className='text-red-500 hover:text-red-600 p-1'>
+                    disabled={isGenerating}
+                    className={`p-1 ${
+                      isGenerating
+                        ? 'text-red-300 cursor-not-allowed'
+                        : 'text-red-500 hover:text-red-600'
+                    }`}>
                     <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path
                         strokeLinecap='round'
@@ -275,50 +288,25 @@ const AIGenerationModal: React.FC<AIGenerationModalProps> = ({
                 type='file'
                 accept='image/*'
                 onChange={handleImageUpload}
+                disabled={isGenerating}
                 className='hidden'
               />
             </div>
           </div>
 
-          {/* How it works */}
-          <div className='bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 rounded-lg p-4 space-y-3'>
-            <h3 className='text-sm font-medium text-gray-700 dark:text-gray-300'>How it works:</h3>
-            <div className='space-y-2 text-xs text-gray-600 dark:text-gray-400'>
-              <div className='flex items-start gap-2'>
-                <span className='text-purple-600 dark:text-purple-400 mt-0.5'>•</span>
-                <p>
-                  <strong>Text only:</strong> AI creates a new character based on your description
-                </p>
-              </div>
-              <div className='flex items-start gap-2'>
-                <span className='text-purple-600 dark:text-purple-400 mt-0.5'>•</span>
-                <p>
-                  <strong>Image only:</strong> AI adds the helmet to your uploaded photo
-                </p>
-              </div>
-              <div className='flex items-start gap-2'>
-                <span className='text-purple-600 dark:text-purple-400 mt-0.5'>•</span>
-                <p>
-                  <strong>Both:</strong> AI uses your photo as reference to create the described
-                  character
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Actions */}
-          <div className='flex gap-3 pt-4'>
+          <div className='flex gap-2 sm:gap-3 pt-2 sm:pt-4'>
             <button
               type='button'
               onClick={onClose}
               disabled={isGenerating}
-              className='flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'>
+              className='flex-1 px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base'>
               Cancel
             </button>
             <button
               type='submit'
               disabled={(!customPrompt.trim() && !customImage) || isGenerating}
-              className='flex-1 px-4 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
+              className='flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base'>
               {isGenerating ? (
                 <>
                   <svg className='animate-spin h-5 w-5' viewBox='0 0 24 24'>

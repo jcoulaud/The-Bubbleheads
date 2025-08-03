@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     if (customImage) {
       // When custom image is provided, reference the composite layout
       if (prompt) {
-        finalPrompt = `Using the helmet design from the left image, create an image of ${prompt} wearing that exact helmet. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style shown on the left.${bannerModifier}`;
+        finalPrompt = `Make an image of the subject from the right image wearing the exact helmet shown in the left image, ${prompt}. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style shown on the left.${bannerModifier}`;
       } else {
         finalPrompt = `Make an image of the subject from the right image wearing the exact helmet shown in the left image. The subject should be floating in outer space with glowing nebulae and stars in the background. Match the helmet's exact colors and style.${bannerModifier}`;
       }
